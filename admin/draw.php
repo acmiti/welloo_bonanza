@@ -313,19 +313,70 @@ $batches = $stmt->fetchAll();
         ctx.stroke();
     }
 
-    /* ---------- Spin animation (5s, 3-phase easing) ---------- */
+    /* ---------- Spin animation (10s: 0-5s constant speed, 5-10s cubic ease-out) ---------- */
 
-    function easeInQuad(x) { return x * x; }
     function easeOutCubic(x) { return 1 - Math.pow(1 - x, 3); }
-    function easeOutQuint(x) { return 1 - Math.pow(1 - x, 5); }
 
     function spinProgress(t) {
-        if (t <= 0.4) {
-            return 0.55 * easeInQuad(t / 0.4);
-        } else if (t <= 0.8) {
-            return 0.55 + 0.37 * easeOutCubic((t - 0.4) / 0.4);
+        if (t <= 0.5) {
+            return 1.4 * t; // constant angular velocity for the first 5s
         }
-        return 0.92 + 0.08 * easeOutQuint((t - 0.8) / 0.2);
+        return 0.7 + 0.3 * easeOutCubic((t - 0.5) / 0.5); // decelerate over the final 5s
+    }
+
+    /* ---------- Web Audio: synthesized tick + fanfare ---------- */
+
+    let audioCtx = null;
+
+    function getAudioCtx() {
+        const AudioCtor = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtor) return null;
+        if (!audioCtx) audioCtx = new AudioCtor();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        return audioCtx;
+    }
+
+    function playTick() {
+        const ctx = getAudioCtx();
+        if (!ctx) return;
+        try {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'square';
+            osc.frequency.value = 950;
+            gain.gain.setValueAtTime(0.16, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.05);
+            osc.connect(gain).connect(ctx.destination);
+            osc.start();
+            osc.stop(ctx.currentTime + 0.06);
+        } catch (e) { /* audio unavailable — spin still works silently */ }
+    }
+
+    function playFanfare() {
+        const ctx = getAudioCtx();
+        if (!ctx) return;
+        try {
+            const notes = [523.25, 659.25, 783.99, 1046.5]; // C5 E5 G5 C6
+            notes.forEach((freq, i) => {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.value = freq;
+                const startTime = ctx.currentTime + i * 0.12;
+                gain.gain.setValueAtTime(0.0001, startTime);
+                gain.gain.exponentialRampToValueAtTime(0.25, startTime + 0.02);
+                gain.gain.exponentialRampToValueAtTime(0.0001, startTime + 0.5);
+                osc.connect(gain).connect(ctx.destination);
+                osc.start(startTime);
+                osc.stop(startTime + 0.55);
+            });
+        } catch (e) { /* audio unavailable — spin still works silently */ }
+    }
+
+    function sliceIndexAtPointer(poolSize, rotation) {
+        const sliceAngle = sliceAngleFor(poolSize);
+        const localAngle = normalizeAngle(-Math.PI / 2 - rotation);
+        return Math.floor(localAngle / sliceAngle) % poolSize;
     }
 
     let spinning = false;
@@ -334,6 +385,7 @@ $batches = $stmt->fetchAll();
         if (spinning || currentPool.length === 0) return;
         spinning = true;
         document.getElementById('spin-btn').disabled = true;
+        getAudioCtx(); // unlock audio on this user gesture
 
         const winningIndex = Math.floor(Math.random() * currentPool.length);
         const winner = currentPool[winningIndex];
@@ -348,8 +400,9 @@ $batches = $stmt->fetchAll();
         const targetRotation = wheelRotation + delta + extraSpins * Math.PI * 2;
 
         const startRotation = wheelRotation;
-        const duration = 5000;
+        const duration = 10000;
         const t0 = performance.now();
+        let lastTickIndex = sliceIndexAtPointer(currentPool.length, wheelRotation);
 
         function frame(now) {
             const t = Math.min((now - t0) / duration, 1);
@@ -357,11 +410,18 @@ $batches = $stmt->fetchAll();
             wheelRotation = startRotation + (targetRotation - startRotation) * p;
             drawWheel(currentPool, wheelRotation);
 
+            const tickIndex = sliceIndexAtPointer(currentPool.length, wheelRotation);
+            if (tickIndex !== lastTickIndex) {
+                lastTickIndex = tickIndex;
+                playTick();
+            }
+
             if (t < 1) {
                 requestAnimationFrame(frame);
             } else {
                 wheelRotation = targetRotation;
                 drawWheel(currentPool, wheelRotation);
+                playFanfare();
                 onSpinComplete(winner);
             }
         }
