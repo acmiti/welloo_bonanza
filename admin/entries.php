@@ -24,7 +24,7 @@ check_access(['admin', 'data_entry']);
     <div class="header">
         <h1>Entries</h1>
     </div>
-    <div class="placeholder">Entry management tools are coming soon. See the <a href="index.php" style="color:#FF9900;">Leads Dashboard</a> for now.</div>
+    <div class="placeholder">Entry management tools are coming soon.</div>
 </div>
 </body>
 </html>

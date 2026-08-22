@@ -29,10 +29,6 @@ check_access(['admin']);
     </div>
 
     <div class="cards">
-        <a class="card" href="index.php">
-            <h3>Leads Dashboard</h3>
-            <p>View and export campaign registrations.</p>
-        </a>
         <a class="card" href="users.php">
             <h3>User Management</h3>
             <p>Create, edit, and manage admin accounts.</p>
