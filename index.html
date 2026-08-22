@@ -15,6 +15,7 @@
 
         .timer-container { background: #121212; border: 1px solid #282828; border-radius: 10px; padding: 10px; margin-bottom: 20px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
         .timer-title { font-size: 11px; text-transform: uppercase; color: #AAA; font-weight: 700; letter-spacing: 0.5px; }
+        #deadline-subtitle.text-xs.text-neutral-400.mt-1 { font-size: 11px; color: #888; margin-top: 4px; }
         .timer-box { display: flex; gap: 12px; justify-content: center; align-items: center; }
         .time-unit { display: flex; flex-direction: column; align-items: center; }
         .time-num { background: #222; border: 1px solid #FF6600; color: #FF9900; font-weight: 900; font-size: 16px; padding: 4px 8px; border-radius: 6px; min-width: 36px; }
@@ -127,6 +128,7 @@
             <div class="time-unit"><span class="time-num" id="d-mins">00</span><span class="time-lbl" id="lbl-mins">විනාඩි</span></div>
             <div class="time-unit"><span class="time-num" id="d-secs">00</span><span class="time-lbl" id="lbl-secs">තත්පර</span></div>
         </div>
+        <p class="text-xs text-neutral-400 mt-1" id="deadline-subtitle" style="display:none;"></p>
     </div>
 
     <img src="welloo-always-dinum-logo.webp" alt="Welloo Always Dinum Bonanza" class="logo">
@@ -258,7 +260,8 @@
             modalBody: "ඔබ ස්වේච්ඡාවෙන් මෙම විස්තර ඇතුළත් කිරීමෙන් RIT Distributors විසින් සංවිධානය කරන Welloo Always Dinum Bonanza ප්‍රවර්ධන වැඩසටහනට සහභාගී වේ. ඔබේ පෞද්ගලිකත්වය අපි ගරු කරන අතර, ඔබේ තොරතුරු නිල ප්‍රචාරණ යාවත්කාලීන, තෑගි දැනුම්දීම් සහ Welloo සන්නාම දීමනා සඳහා පමණක් භාවිත කරමු. ඔබේ දත්ත කිසිවිටෙක තෙවන පාර්ශවයන් සමඟ විකිණීමට හෝ බෙදාගැනීමට ලක් නොකෙරේ.",
             modalOk: "හරි",
             modalReadFull: "කොන්දේසි සම්පුර්ණයෙන් කියවන්න",
-            entriesClosed: "{batch} සඳහා ප්‍රවේශයන් දැන් වසා ඇත. ඉදිරිපත් කිරීම් ස්වයංක්‍රීයව ඊළඟ දිනුම් ඇදීමට සුදුසුකම් ලබනු ඇත!"
+            entriesClosed: "{batch} සඳහා ප්‍රවේශයන් දැන් වසා ඇත. ඉදිරිපත් කිරීම් ස්වයංක්‍රීයව ඊළඟ දිනුම් ඇදීමට සුදුසුකම් ලබනු ඇත!",
+            deadlineLabel: "අවසාන දිනය:"
         },
         ta: {
             topBanner: "🏆 அனைவருக்கும் வெற்றி! | EVERYONE IS A WINNER",
@@ -281,7 +284,8 @@
             modalBody: "உங்கள் விவரங்களைத் தானாக முன்வந்து சமர்ப்பிப்பதன் மூலம், RIT Distributors நிறுவனத்தால் ஏற்பாடு செய்யப்படும் Welloo Always Dinum Bonanza பிரச்சாரத்தில் நீங்கள் பங்கேற்கிறீர்கள். உங்கள் தனியுரிமையை நாங்கள் மதிக்கிறோம், மேலும் உங்கள் தகவல்களை அதிகாரப்பூர்வ பிரச்சார அறிவிப்புகள், பரிசு அறிவிப்புகள் மற்றும் Welloo பிராண்ட் சலுகைகளுக்கு மட்டுமே பயன்படுத்துவோம். உங்கள் தரவு மூன்றாம் தரப்பினருடன் விற்கப்படவோ பகிரப்படவோ மாட்டாது.",
             modalOk: "சரி",
             modalReadFull: "முழு விதிமுறைகளைப் படிக்க",
-            entriesClosed: "{batch} க்கான பதிவுகள் இப்போது மூடப்பட்டுள்ளன. சமர்ப்பிப்புகள் தானாகவே அடுத்த குலுக்கலுக்கு தகுதி பெறும்!"
+            entriesClosed: "{batch} க்கான பதிவுகள் இப்போது மூடப்பட்டுள்ளன. சமர்ப்பிப்புகள் தானாகவே அடுத்த குலுக்கலுக்கு தகுதி பெறும்!",
+            deadlineLabel: "காலக்கெடு:"
         },
         en: {
             topBanner: "🏆 EVERYONE IS A WINNER! | 100% GUARANTEED",
@@ -304,7 +308,8 @@
             modalBody: "By submitting your details, you voluntarily participate in the Welloo Always Dinum Bonanza campaign organized by RIT Distributors. We respect your privacy and commit to using your information solely for official campaign updates, prize notifications, and Welloo brand offers. Your data will never be sold or shared with third parties.",
             modalOk: "OK",
             modalReadFull: "Read Full Terms",
-            entriesClosed: "Entries for {batch} are now closed. Submissions will automatically qualify for the next draw!"
+            entriesClosed: "Entries for {batch} are now closed. Submissions will automatically qualify for the next draw!",
+            deadlineLabel: "Deadline:"
         }
     };
 
@@ -428,6 +433,7 @@
 
         updateDistrictDropdown(lang);
         renderClosedBanner();
+        renderDeadlineSubtitle();
     }
 
     let currentBatch = null;
@@ -457,6 +463,8 @@
             countdownIntervalId = null;
         }
 
+        renderDeadlineSubtitle();
+
         if (!currentBatch) {
             unlockEntryForm();
             return;
@@ -471,6 +479,16 @@
 
         unlockEntryForm();
         startCountdown(deadline);
+    }
+
+    function renderDeadlineSubtitle() {
+        const subtitle = document.getElementById('deadline-subtitle');
+        if (!currentBatch || !currentBatch.entry_deadline_formatted) {
+            subtitle.style.display = 'none';
+            return;
+        }
+        subtitle.innerText = `${translations[currentLang].deadlineLabel} ${currentBatch.entry_deadline_formatted}`;
+        subtitle.style.display = 'block';
     }
 
     function startCountdown(targetDate) {

@@ -15,6 +15,10 @@ $stmt = $pdo->query(
 );
 $batch = $stmt->fetch();
 
+if ($batch) {
+    $batch['entry_deadline_formatted'] = date('F j, Y \a\t g:i A', strtotime($batch['entry_deadline']));
+}
+
 echo json_encode([
     'status' => 'success',
     'batch'  => $batch ?: null,
