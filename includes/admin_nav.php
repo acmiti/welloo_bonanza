@@ -7,11 +7,13 @@ $__admin_nav_items = [
         ['label' => 'Dashboard',       'href' => '/admin/dashboard.php', 'match' => 'dashboard.php'],
         ['label' => 'Draw Batches',    'href' => '/admin/batches.php',   'match' => 'batches.php'],
         ['label' => 'Draw Manager',    'href' => '/admin/draw.php',      'match' => 'draw.php'],
+        ['label' => 'Winner Logs',     'href' => '/admin/winners.php',   'match' => 'winners.php'],
         ['label' => 'All Entries',     'href' => '/admin/entries.php',   'match' => 'entries.php'],
         ['label' => 'User Management', 'href' => '/admin/users.php',     'match' => 'users.php'],
     ],
     'draw_manager' => [
         ['label' => 'Draw Manager', 'href' => '/admin/draw.php',    'match' => 'draw.php'],
+        ['label' => 'Winner Logs',  'href' => '/admin/winners.php', 'match' => 'winners.php'],
         ['label' => 'All Entries',  'href' => '/admin/entries.php', 'match' => 'entries.php'],
     ],
     'data_entry' => [
