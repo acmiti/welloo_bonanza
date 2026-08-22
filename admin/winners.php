@@ -3,28 +3,37 @@ require_once __DIR__ . '/../includes/auth.php';
 
 check_access(['admin', 'draw_manager']);
 
-$stmt = $pdo->query(
-    "SELECT e.id, e.name, e.phone, e.district, e.town, e.dealer, e.language,
-            e.batch_id, e.verification_status, e.won_at,
-            b.batch_name, b.draw_datetime
-     FROM bonanza_entries e
-     JOIN draw_batches b ON b.id = e.batch_id
-     WHERE e.is_winner = 1
-     ORDER BY b.id DESC, e.won_at ASC"
-);
-$winners = $stmt->fetchAll();
-
+$loadError = null;
 $batches = [];
-foreach ($winners as $w) {
-    $bid = (int) $w['batch_id'];
-    if (!isset($batches[$bid])) {
-        $batches[$bid] = [
-            'batch_name'    => $w['batch_name'],
-            'draw_datetime' => $w['draw_datetime'],
-            'winners'       => [],
-        ];
+
+try {
+    $stmt = $pdo->query(
+        "SELECT e.id, e.name, e.phone, e.district, e.town, e.dealer, e.language,
+                e.batch_id, e.verification_status, e.won_at,
+                b.batch_name, b.draw_datetime
+         FROM bonanza_entries e
+         JOIN draw_batches b ON b.id = e.batch_id
+         WHERE e.is_winner = 1
+         ORDER BY b.id DESC, e.won_at ASC"
+    );
+    $winners = $stmt->fetchAll();
+
+    foreach ($winners as $w) {
+        $bid = (int) $w['batch_id'];
+        if (!isset($batches[$bid])) {
+            $batches[$bid] = [
+                'batch_name'    => $w['batch_name'],
+                'draw_datetime' => $w['draw_datetime'],
+                'winners'       => [],
+            ];
+        }
+        $batches[$bid]['winners'][] = $w;
     }
-    $batches[$bid]['winners'][] = $w;
+} catch (PDOException $e) {
+    // Most likely cause: database/03_winner_logs.sql hasn't been run yet, so
+    // won_at / verification_status don't exist on bonanza_entries.
+    $loadError = 'Could not load winners: ' . $e->getMessage()
+        . '. If this mentions an unknown column (won_at, verification_status), run database/03_winner_logs.sql against the database.';
 }
 ?>
 <!DOCTYPE html>
@@ -45,6 +54,7 @@ foreach ($winners as $w) {
         .btn-small { padding: 6px 10px; font-size: 11px; }
 
         .placeholder { background: #1A1A1A; border: 1px solid #333; border-radius: 10px; padding: 40px; text-align: center; color: #888; }
+        .load-error { background: rgba(255, 51, 51, 0.1); border: 1px solid #FF3333; color: #FF6B6B; padding: 16px 18px; border-radius: 10px; font-size: 13px; line-height: 1.6; margin-bottom: 20px; }
 
         .batch-group { background: #161616; border: 1px solid #2A2A2A; border-radius: 10px; margin-bottom: 20px; overflow: hidden; }
         .batch-group-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; padding: 14px 18px; background: #1E1E1E; border-bottom: 1px solid #2A2A2A; }
@@ -90,7 +100,9 @@ foreach ($winners as $w) {
         </div>
     </div>
 
-    <?php if (empty($batches)): ?>
+    <?php if ($loadError): ?>
+        <div class="load-error"><?= htmlspecialchars($loadError) ?></div>
+    <?php elseif (empty($batches)): ?>
         <div class="placeholder">No winners recorded yet. Run a draw from the Draw Manager to get started.</div>
     <?php else: ?>
         <?php foreach ($batches as $batchId => $group): ?>

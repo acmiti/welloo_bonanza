@@ -7,23 +7,34 @@ $isAdmin = $_SESSION['role'] === 'admin';
 
 $batchFilter = (int) ($_GET['batch_id'] ?? 0);
 
-$batchListStmt = $pdo->query("SELECT id, batch_name FROM draw_batches ORDER BY id DESC");
-$batchList = $batchListStmt->fetchAll();
+$loadError = null;
+$batchList = [];
+$entries = [];
 
-$sql = "SELECT e.id, e.name, e.phone, e.email, e.invoice_number, e.district, e.town, e.dealer,
-               e.language, e.is_winner, e.batch_id, e.created_at, b.batch_name
-        FROM bonanza_entries e
-        LEFT JOIN draw_batches b ON b.id = e.batch_id";
-$params = [];
-if ($batchFilter > 0) {
-    $sql .= " WHERE e.batch_id = :batch_id";
-    $params[':batch_id'] = $batchFilter;
+try {
+    $batchListStmt = $pdo->query("SELECT id, batch_name FROM draw_batches ORDER BY id DESC");
+    $batchList = $batchListStmt->fetchAll();
+
+    $sql = "SELECT e.id, e.name, e.phone, e.email, e.invoice_number, e.district, e.town, e.dealer,
+                   e.language, e.is_winner, e.batch_id, e.created_at, b.batch_name
+            FROM bonanza_entries e
+            LEFT JOIN draw_batches b ON b.id = e.batch_id";
+    $params = [];
+    if ($batchFilter > 0) {
+        $sql .= " WHERE e.batch_id = :batch_id";
+        $params[':batch_id'] = $batchFilter;
+    }
+    $sql .= " ORDER BY e.id DESC LIMIT 200";
+
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
+    $entries = $stmt->fetchAll();
+} catch (PDOException $e) {
+    // Most likely cause: database/04_add_entry_contact_fields.sql hasn't been
+    // run yet, so email / invoice_number don't exist on bonanza_entries.
+    $loadError = 'Could not load entries: ' . $e->getMessage()
+        . '. If this mentions an unknown column (email, invoice_number), run database/04_add_entry_contact_fields.sql against the database.';
 }
-$sql .= " ORDER BY e.id DESC LIMIT 200";
-
-$stmt = $pdo->prepare($sql);
-$stmt->execute($params);
-$entries = $stmt->fetchAll();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -52,6 +63,7 @@ $entries = $stmt->fetchAll();
         .badge-lang { background: #333; color: #FF9900; }
         .badge-winner { background: rgba(37, 211, 102, 0.15); color: #25D366; }
         .muted { color: #666; }
+        .load-error { background: rgba(255, 51, 51, 0.1); border: 1px solid #FF3333; color: #FF6B6B; padding: 16px 18px; border-radius: 10px; font-size: 13px; line-height: 1.6; margin-bottom: 20px; }
 
         .row-actions { display: flex; gap: 6px; }
         .row-actions button { background: #262626; color: #DDD; border: 1px solid #3A3A3A; padding: 5px 9px; border-radius: 6px; font-size: 11px; cursor: pointer; }
@@ -99,6 +111,9 @@ $entries = $stmt->fetchAll();
         </div>
     </div>
 
+    <?php if ($loadError): ?>
+        <div class="load-error"><?= htmlspecialchars($loadError) ?></div>
+    <?php else: ?>
     <div style="overflow-x:auto;">
     <table>
         <thead>
@@ -155,9 +170,10 @@ $entries = $stmt->fetchAll();
         </tbody>
     </table>
     </div>
+    <?php endif; ?>
 </div>
 
-<?php if ($isAdmin): ?>
+<?php if ($isAdmin && !$loadError): ?>
 <div id="bulk-bar">
     <span id="bulk-count">0 items selected</span>
     <button class="btn btn-danger" onclick="openDeleteModal(getSelectedIds())">Delete Selected</button>
