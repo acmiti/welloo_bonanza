@@ -39,6 +39,9 @@
         .disclaimer-box { background: #111; border: 1px solid #222; border-radius: 6px; padding: 10px; font-size: 11px; color: #888; line-height: 1.4; margin-top: 4px; }
         .disclaimer-box a { color: #FF9900; text-decoration: underline; cursor: pointer; }
 
+        .entry-closed-banner { background: rgba(255, 51, 51, 0.12); border: 1px solid #FF3333; color: #FF6B6B; font-size: 13px; font-weight: 700; padding: 12px 14px; border-radius: 8px; margin-bottom: 16px; text-align: center; line-height: 1.5; }
+        input:disabled, select:disabled, .cta-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
         .cta-btn { background: linear-gradient(180deg, #FF6600 0%, #D64F00 100%); color: #FFF; font-size: 16px; font-weight: 900; padding: 18px; border: none; border-radius: 8px; cursor: pointer; margin-top: 6px; text-transform: uppercase; box-shadow: 0 4px 15px rgba(255,102,0,0.4); transition: transform 0.1s ease; }
         .cta-btn:active { transform: scale(0.98); }
         
@@ -134,6 +137,8 @@
         <button class="lang-btn" onclick="setLang('en', this)">English</button>
     </div>
 
+    <div class="entry-closed-banner" id="entry-closed-banner" style="display:none;"></div>
+
     <form id="regForm" onsubmit="handleFormSubmit(event)">
         <input type="hidden" name="lang" id="selected-lang" value="SI">
         
@@ -226,7 +231,8 @@
     document.addEventListener("DOMContentLoaded", function () {
         document.getElementById('year').innerText = new Date().getFullYear();
         setLang(currentLang, document.querySelector('.lang-btn.active'));
-        initWeeklyCountdown();
+        fetchCurrentBatch();
+        setInterval(fetchCurrentBatch, 60000);
         startSocialProofLoop();
     });
 
@@ -251,7 +257,8 @@
             modalTitle: "නියම සහ පෞද්ගලිකත්ව ප්‍රතිපත්තිය",
             modalBody: "ඔබ ස්වේච්ඡාවෙන් මෙම විස්තර ඇතුළත් කිරීමෙන් RIT Distributors විසින් සංවිධානය කරන Welloo Always Dinum Bonanza ප්‍රවර්ධන වැඩසටහනට සහභාගී වේ. ඔබේ පෞද්ගලිකත්වය අපි ගරු කරන අතර, ඔබේ තොරතුරු නිල ප්‍රචාරණ යාවත්කාලීන, තෑගි දැනුම්දීම් සහ Welloo සන්නාම දීමනා සඳහා පමණක් භාවිත කරමු. ඔබේ දත්ත කිසිවිටෙක තෙවන පාර්ශවයන් සමඟ විකිණීමට හෝ බෙදාගැනීමට ලක් නොකෙරේ.",
             modalOk: "හරි",
-            modalReadFull: "කොන්දේසි සම්පුර්ණයෙන් කියවන්න"
+            modalReadFull: "කොන්දේසි සම්පුර්ණයෙන් කියවන්න",
+            entriesClosed: "{batch} සඳහා ප්‍රවේශයන් දැන් වසා ඇත. ඉදිරිපත් කිරීම් ස්වයංක්‍රීයව ඊළඟ දිනුම් ඇදීමට සුදුසුකම් ලබනු ඇත!"
         },
         ta: {
             topBanner: "🏆 அனைவருக்கும் வெற்றி! | EVERYONE IS A WINNER",
@@ -273,7 +280,8 @@
             modalTitle: "விதிமுறைகள் மற்றும் தனியுரிமைக் கொள்கை",
             modalBody: "உங்கள் விவரங்களைத் தானாக முன்வந்து சமர்ப்பிப்பதன் மூலம், RIT Distributors நிறுவனத்தால் ஏற்பாடு செய்யப்படும் Welloo Always Dinum Bonanza பிரச்சாரத்தில் நீங்கள் பங்கேற்கிறீர்கள். உங்கள் தனியுரிமையை நாங்கள் மதிக்கிறோம், மேலும் உங்கள் தகவல்களை அதிகாரப்பூர்வ பிரச்சார அறிவிப்புகள், பரிசு அறிவிப்புகள் மற்றும் Welloo பிராண்ட் சலுகைகளுக்கு மட்டுமே பயன்படுத்துவோம். உங்கள் தரவு மூன்றாம் தரப்பினருடன் விற்கப்படவோ பகிரப்படவோ மாட்டாது.",
             modalOk: "சரி",
-            modalReadFull: "முழு விதிமுறைகளைப் படிக்க"
+            modalReadFull: "முழு விதிமுறைகளைப் படிக்க",
+            entriesClosed: "{batch} க்கான பதிவுகள் இப்போது மூடப்பட்டுள்ளன. சமர்ப்பிப்புகள் தானாகவே அடுத்த குலுக்கலுக்கு தகுதி பெறும்!"
         },
         en: {
             topBanner: "🏆 EVERYONE IS A WINNER! | 100% GUARANTEED",
@@ -295,7 +303,8 @@
             modalTitle: "Terms & Privacy Policy",
             modalBody: "By submitting your details, you voluntarily participate in the Welloo Always Dinum Bonanza campaign organized by RIT Distributors. We respect your privacy and commit to using your information solely for official campaign updates, prize notifications, and Welloo brand offers. Your data will never be sold or shared with third parties.",
             modalOk: "OK",
-            modalReadFull: "Read Full Terms"
+            modalReadFull: "Read Full Terms",
+            entriesClosed: "Entries for {batch} are now closed. Submissions will automatically qualify for the next draw!"
         }
     };
 
@@ -418,56 +427,106 @@
         document.getElementById('modal-read-full').href = `terms.html?lang=${lang}`;
 
         updateDistrictDropdown(lang);
+        renderClosedBanner();
     }
 
-    function initWeeklyCountdown(endDateString) {
-    const finalDeadline = new Date(endDateString).getTime();
+    let currentBatch = null;
+    let countdownIntervalId = null;
+    let formLocked = false;
 
-    function updateTimer() {
-        const now = new Date();
-        const nowMs = now.getTime();
+    // MySQL DATETIME ("YYYY-MM-DD HH:MM:SS") isn't reliably parsed as local time
+    // by Date() across browsers unless it's reshaped into an ISO-like string first.
+    function parseServerDateTime(value) {
+        return new Date(String(value).replace(' ', 'T'));
+    }
 
-        // Halt execution if the hard campaign end date has passed
-        if (nowMs >= finalDeadline) {
-            document.getElementById('d-days').innerText = '00';
-            document.getElementById('d-hours').innerText = '00';
-            document.getElementById('d-mins').innerText = '00';
-            document.getElementById('d-secs').innerText = '00';
+    async function fetchCurrentBatch() {
+        try {
+            const res = await fetch('api/get_current_batch.php', { headers: { 'Accept': 'application/json' } });
+            const data = await res.json();
+            currentBatch = (data.status === 'success') ? data.batch : null;
+        } catch (err) {
+            currentBatch = null;
+        }
+        applyBatchState();
+    }
+
+    function applyBatchState() {
+        if (countdownIntervalId) {
+            clearInterval(countdownIntervalId);
+            countdownIntervalId = null;
+        }
+
+        if (!currentBatch) {
+            unlockEntryForm();
             return;
         }
 
-        // Calculate next Friday at 15:00:00
-        let target = new Date(now);
-        target.setDate(now.getDate() + ((5 + 7 - now.getDay()) % 7));
-        target.setHours(15, 0, 0, 0);
+        const deadline = parseServerDateTime(currentBatch.entry_deadline);
 
-        // If today is Friday past 3 PM, roll over to next Friday
-        if (now >= target) {
-            target.setDate(target.getDate() + 7);
+        if (Date.now() >= deadline.getTime()) {
+            lockEntryForm();
+            return;
         }
 
-        // Cap the weekly target if it exceeds the hard final deadline
-        let targetMs = target.getTime();
-        if (targetMs > finalDeadline) {
-            targetMs = finalDeadline;
-        }
-
-        const diff = targetMs - nowMs;
-
-        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-        const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
-        const mins = Math.floor((diff / 1000 / 60) % 60);
-        const secs = Math.floor((diff / 1000) % 60);
-
-        document.getElementById('d-days').innerText = String(days).padStart(2, '0');
-        document.getElementById('d-hours').innerText = String(hours).padStart(2, '0');
-        document.getElementById('d-mins').innerText = String(mins).padStart(2, '0');
-        document.getElementById('d-secs').innerText = String(secs).padStart(2, '0');
+        unlockEntryForm();
+        startCountdown(deadline);
     }
 
-    updateTimer();
-    setInterval(updateTimer, 1000);
-}
+    function startCountdown(targetDate) {
+        const targetMs = targetDate.getTime();
+
+        function updateTimer() {
+            const diff = targetMs - Date.now();
+
+            if (diff <= 0) {
+                clearInterval(countdownIntervalId);
+                countdownIntervalId = null;
+                document.getElementById('d-days').innerText = '00';
+                document.getElementById('d-hours').innerText = '00';
+                document.getElementById('d-mins').innerText = '00';
+                document.getElementById('d-secs').innerText = '00';
+                lockEntryForm();
+                return;
+            }
+
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+            const mins = Math.floor((diff / 1000 / 60) % 60);
+            const secs = Math.floor((diff / 1000) % 60);
+
+            document.getElementById('d-days').innerText = String(days).padStart(2, '0');
+            document.getElementById('d-hours').innerText = String(hours).padStart(2, '0');
+            document.getElementById('d-mins').innerText = String(mins).padStart(2, '0');
+            document.getElementById('d-secs').innerText = String(secs).padStart(2, '0');
+        }
+
+        updateTimer();
+        countdownIntervalId = setInterval(updateTimer, 1000);
+    }
+
+    function renderClosedBanner() {
+        const banner = document.getElementById('entry-closed-banner');
+        if (!formLocked || !currentBatch) return;
+        banner.innerText = translations[currentLang].entriesClosed.replace('{batch}', currentBatch.batch_name);
+    }
+
+    function lockEntryForm() {
+        formLocked = true;
+        ['name', 'phone', 'select-district', 'town', 'dealer', 'btn-submit'].forEach(id => {
+            document.getElementById(id).disabled = true;
+        });
+        document.getElementById('entry-closed-banner').style.display = 'block';
+        renderClosedBanner();
+    }
+
+    function unlockEntryForm() {
+        formLocked = false;
+        ['name', 'phone', 'select-district', 'town', 'dealer', 'btn-submit'].forEach(id => {
+            document.getElementById(id).disabled = false;
+        });
+        document.getElementById('entry-closed-banner').style.display = 'none';
+    }
 
 
 
