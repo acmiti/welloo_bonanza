@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' https:; img-src 'self' blob: data: https:;">
+    <title>Welloo Always Dinum Bonanza | Sri Lanka</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; }
+        body { background-color: #0A0A0A; color: #FFFFFF; display: flex; flex-direction: column; align-items: center; padding: 20px 12px; }
+        .container { max-width: 440px; width: 100%; background: linear-gradient(180deg, #1A1A1A 0%, #0A0A0A 100%); border: 1px solid #333; border-radius: 16px; padding: 24px 20px; box-shadow: 0 10px 30px rgba(255, 102, 0, 0.15); text-align: center; position: relative; overflow: hidden; }
+        
+        .winner-banner { background: linear-gradient(90deg, #FF6600, #FF9900); color: #000; font-weight: 900; font-size: 13px; text-transform: uppercase; padding: 10px 14px; border-radius: 6px; display: block; margin-bottom: 8px; letter-spacing: 0.5px; box-shadow: 0 0 12px rgba(255,102,0,0.4); }
+        .weekly-prize-hook { color: #FF9900; font-size: 13px; font-weight: 800; margin-bottom: 14px; text-transform: uppercase; letter-spacing: 0.3px; }
+
+        .timer-container { background: #121212; border: 1px solid #282828; border-radius: 10px; padding: 10px; margin-bottom: 20px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+        .timer-title { font-size: 11px; text-transform: uppercase; color: #AAA; font-weight: 700; letter-spacing: 0.5px; }
+        .timer-box { display: flex; gap: 12px; justify-content: center; align-items: center; }
+        .time-unit { display: flex; flex-direction: column; align-items: center; }
+        .time-num { background: #222; border: 1px solid #FF6600; color: #FF9900; font-weight: 900; font-size: 16px; padding: 4px 8px; border-radius: 6px; min-width: 36px; }
+        .time-lbl { font-size: 9px; color: #888; text-transform: uppercase; margin-top: 3px; font-weight: 600; }
+
+        .logo { width: 100%; max-width: 280px; height: auto; margin-bottom: 20px; filter: drop-shadow(0 5px 15px rgba(255,102,0,0.3)); }
+        
+        .lang-picker { display: flex; justify-content: center; gap: 10px; margin-bottom: 24px; }
+        .lang-btn { background: #222; border: 1px solid #444; color: #AAA; padding: 8px 18px; border-radius: 20px; font-weight: bold; cursor: pointer; font-size: 13px; transition: 0.2s; }
+        .lang-btn.active { background: #FF6600; color: #FFF; border-color: #FF6600; box-shadow: 0 0 10px rgba(255,102,0,0.5); }
+        
+        form { display: flex; flex-direction: column; gap: 16px; text-align: left; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        label { font-size: 13px; color: #DDD; font-weight: 600; }
+        input, select { width: 100%; padding: 14px; background: #141414; border: 1px solid #333; border-radius: 8px; color: #FFF; font-size: 15px; outline: none; transition: border-color 0.2s, box-shadow 0.2s; }
+        select { -webkit-appearance: none; appearance: none; background-image: url("data:image/svg+xml;utf8,<svg fill='%23FF6600' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='7 10l5 5 5-5z'/></svg>"); background-repeat: no-repeat; background-position-x: 98%; background-position-y: 50%; }
+        input:focus, select:focus { border-color: #FF6600; box-shadow: 0 0 8px rgba(255,102,0,0.5); }
+        
+        input.input-error, select.input-error { border-color: #FF3333 !important; box-shadow: 0 0 8px rgba(255, 51, 51, 0.6) !important; }
+        .error-msg { color: #FF4D4D; font-size: 11px; font-weight: bold; display: none; margin-top: -2px; }
+
+        .disclaimer-box { background: #111; border: 1px solid #222; border-radius: 6px; padding: 10px; font-size: 11px; color: #888; line-height: 1.4; margin-top: 4px; }
+        .disclaimer-box a { color: #FF9900; text-decoration: underline; cursor: pointer; }
+
+        .cta-btn { background: linear-gradient(180deg, #FF6600 0%, #D64F00 100%); color: #FFF; font-size: 16px; font-weight: 900; padding: 18px; border: none; border-radius: 8px; cursor: pointer; margin-top: 6px; text-transform: uppercase; box-shadow: 0 4px 15px rgba(255,102,0,0.4); transition: transform 0.1s ease; }
+        .cta-btn:active { transform: scale(0.98); }
+        
+        .guarantee { font-size: 12px; color: #999; margin-top: 18px; display: flex; align-items: center; justify-content: center; gap: 6px; }
+
+        .product-showcase { margin-top: 24px; margin-bottom: 8px; width: 100%; }
+        .product-showcase img { width: 100%; height: auto; border-radius: 10px; display: block; border: 1px solid #222; background: #111; }
+
+        .footer { margin-top: 18px; padding-top: 18px; border-top: 1px solid #222; font-size: 11px; color: #777; line-height: 1.6; }
+        .social-links { display: flex; justify-content: center; gap: 12px; margin-bottom: 12px; }
+        .social-links a { color: #FF6600; text-decoration: none; font-weight: bold; font-size: 12px; }
+        .footer-brand { color: #AAA; font-weight: 600; }
+        .footer-brand a { color: #BBB; text-decoration: underline; }
+
+        .external-footer-tech { margin-top: 16px; color: #666; font-size: 11px; text-align: center; }
+        .external-footer-tech a { color: #888; text-decoration: underline; font-weight: 600; }
+        .external-footer-tech a:hover { color: #FF6600; }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-10px); }
+            40%, 80% { transform: translateX(10px); }
+        }
+        .shake-animated { animation: shake 0.4s ease-in-out; }
+
+        .redirect-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(10, 10, 10, 0.96); display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 16px; opacity: 0; visibility: hidden; transition: opacity 0.3s ease, visibility 0.3s ease; z-index: 100; padding: 20px; }
+        .redirect-overlay.active { opacity: 1; visibility: visible; }
+        
+        .spinner { width: 50px; height: 50px; border: 4px solid #222; border-top: 4px solid #25D366; border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .redirect-status { font-size: 15px; font-weight: 700; color: #25D366; text-transform: uppercase; letter-spacing: 0.5px; }
+        .redirect-sub { font-size: 13px; color: #DDD; font-weight: 600; line-height: 1.5; text-align: center; }
+        .fallback-btn { display: inline-block; margin-top: 10px; padding: 10px 18px; background: #25D366; color: #000; font-weight: bold; border-radius: 6px; text-decoration: none; font-size: 14px; box-shadow: 0 0 10px rgba(37, 211, 102, 0.4); }
+
+        #social-toast {
+            position: fixed;
+            bottom: 16px;
+            left: 50%;
+            transform: translateX(-50%) translateY(80px);
+            background: rgba(22, 22, 22, 0.96);
+            border: 1px solid #FF6600;
+            border-radius: 30px;
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6), 0 0 10px rgba(255, 102, 0, 0.25);
+            z-index: 90;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.4s ease;
+            opacity: 0;
+            pointer-events: none;
+            width: max-content;
+            max-width: 90vw;
+            backdrop-filter: blur(4px);
+        }
+        #social-toast.toast-show { transform: translateX(-50%) translateY(0); opacity: 1; }
+        .toast-badge { background: #FF6600; color: #000; font-size: 10px; font-weight: 900; border-radius: 50%; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        #toast-text { font-size: 12px; color: #DDD; line-height: 1.2; text-align: left; }
+        #toast-text strong { color: #FF9900; font-weight: 700; }
+
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: flex; justify-content: center; align-items: center; opacity: 0; visibility: hidden; transition: 0.3s ease; z-index: 200; padding: 20px; }
+        .modal.modal-open { opacity: 1; visibility: visible; }
+        .modal-content { background: #1A1A1A; border: 1px solid #444; border-radius: 12px; max-width: 400px; width: 100%; padding: 20px; text-align: left; max-height: 80vh; overflow-y: auto; font-size: 12px; line-height: 1.6; color: #CCC; }
+        .modal-content h3 { color: #FF9900; margin-bottom: 12px; }
+        .modal-close { background: #FF6600; color: #000; border: none; font-weight: bold; padding: 8px 16px; border-radius: 6px; cursor: pointer; float: right; margin-top: 12px; }
+    </style>
+</head>
+<body>
+
+<div class="container" id="main-container">
+    
+    <div class="winner-banner" id="top-banner">🏆 EVERYONE IS A WINNER! | 100% GUARANTEED</div>
+    <div class="weekly-prize-hook" id="sub-banner">Win a Welloo Grinder Every Week + More!</div>
+
+    <div class="timer-container">
+        <div class="timer-title" id="timer-label">ඊළඟ නොමිලේ Grinder ජයග්‍රාහකයා තේරීමට තව:</div>
+        <div class="timer-box">
+            <div class="time-unit"><span class="time-num" id="d-days">00</span><span class="time-lbl" id="lbl-days">දින</span></div>
+            <div class="time-unit"><span class="time-num" id="d-hours">00</span><span class="time-lbl" id="lbl-hours">පැය</span></div>
+            <div class="time-unit"><span class="time-num" id="d-mins">00</span><span class="time-lbl" id="lbl-mins">විනාඩි</span></div>
+            <div class="time-unit"><span class="time-num" id="d-secs">00</span><span class="time-lbl" id="lbl-secs">තත්පර</span></div>
+        </div>
+    </div>
+
+    <img src="welloo-always-dinum-logo.webp" alt="Welloo Always Dinum Bonanza" class="logo">
+    
+    <div class="lang-picker">
+        <button class="lang-btn active" onclick="setLang('si', this)">සිංහල</button>
+        <button class="lang-btn" onclick="setLang('ta', this)">தமிழ்</button>
+        <button class="lang-btn" onclick="setLang('en', this)">English</button>
+    </div>
+
+    <form id="regForm" onsubmit="handleFormSubmit(event)">
+        <input type="hidden" name="lang" id="selected-lang" value="SI">
+        
+        <div class="form-group">
+            <label id="lbl-name">ඔබේ නම (Full Name)</label>
+            <input type="text" id="name" name="name" placeholder="Nimal Perera" oninput="clearError(this)">
+            <span class="error-msg" id="name-error"></span>
+        </div>
+        
+        <div class="form-group">
+            <label id="lbl-phone">WhatsApp දුරකථන අංකය (Mobile No)</label>
+            <input type="tel" id="phone" name="phone" placeholder="0771234567" maxlength="10" oninput="cleanPhoneInput(this)">
+            <span class="error-msg" id="phone-error"></span>
+        </div>
+
+        <div class="form-group">
+            <label id="lbl-district">දිස්ත්‍රික්කය (District)</label>
+            <select id="select-district" name="district" onchange="clearError(this)"></select>
+            <span class="error-msg" id="select-district-error"></span>
+        </div>
+
+        <div class="form-group">
+            <label id="lbl-town">ළඟම නගරය / ගම (City / Town)</label>
+            <input type="text" id="town" name="town" placeholder="Gampaha" oninput="clearError(this)">
+            <span class="error-msg" id="town-error"></span>
+        </div>
+
+        <div class="form-group">
+            <label id="lbl-dealer">ඔබ සාමාන්‍යයෙන් Power Tools මිලදී ගන්නා වෙළඳසැල / Hardware එක</label>
+            <input type="text" id="dealer" name="dealer" placeholder="Samarasinghe Hardware" oninput="clearError(this)">
+            <span class="error-msg" id="dealer-error"></span>
+        </div>
+
+        <div class="disclaimer-box" id="privacy-disclaimer">
+            🔒 ඔබ ස්වේච්ඡාවෙන් මෙම විස්තර ඇතුළත් කරන අතර, ඔබේ පෞද්ගලිකත්වය සුරක්ෂිත කෙරේ. Welloo සන්නාමයට අදාළ නිල දැනුම්දීම් සඳහා පමණක් භාවිත කරනු ලැබේ. <a onclick="openModal('modal-terms')">Terms & Privacy Policy</a>
+        </div>
+
+        <button type="submit" class="cta-btn" id="btn-submit">ඔබගේ තෑග්ග දැන්ම ලබාගන්න ➔</button>
+    </form>
+
+    <div class="guarantee" id="guarantee-text">
+        🔒 මාස 12 ක Official Industrial වගකීමක් සමගින්
+    </div>
+
+    <div class="product-showcase">
+        <img src="welloo-industrial-power-tools.webp" alt="Welloo Industrial Power Tools Range">
+    </div>
+
+    <div class="footer">
+        <div class="social-links">
+            <a href="https://www.facebook.com/welloosl" target="_blank" rel="noopener noreferrer">Facebook Page</a>
+        </div>
+
+        <div class="footer-brand">
+            Copyright &copy; <span id="year"></span> Welloo Sri Lanka by <a href="http://www.rit.lk" target="_blank" rel="noopener noreferrer">RIT Distributors</a>
+        </div>
+    </div>
+
+    <div class="redirect-overlay" id="overlay">
+        <div class="spinner"></div>
+        <div class="redirect-status">Connecting to WhatsApp...</div>
+        <div class="redirect-sub" id="overlay-msg">Connecting you via WhatsApp to finalize your registration</div>
+    </div>
+
+</div>
+
+<div class="external-footer-tech">
+    Powered by <a href="http://www.inotrend.net" target="_blank" rel="noopener noreferrer">Catch SL</a>
+</div>
+
+<div id="social-toast">
+    <div class="toast-badge">✓</div>
+    <div id="toast-text"></div>
+</div>
+
+<div class="modal" id="modal-terms">
+    <div class="modal-content">
+        <h3>Terms & Privacy Policy</h3>
+        <p>By submitting your details, you voluntarily participate in the Welloo Always Dinum Bonanza campaign organized by RIT Distributors. We respect your privacy and commit to using your information solely for official campaign updates, prize notifications, and Welloo brand offers. Your data will never be sold or shared with third parties.</p>
+        <button class="modal-close" onclick="closeModal('modal-terms')">OK</button>
+    </div>
+</div>
+
+<script>
+    let currentLang = 'si';
+
+    document.addEventListener("DOMContentLoaded", function () {
+        document.getElementById('year').innerText = new Date().getFullYear();
+        updateDistrictDropdown(currentLang);
+        initWeeklyCountdown();
+        startSocialProofLoop();
+    });
+
+    const translations = {
+        si: {
+            topBanner: "🏆 සියලුදෙනාටම තෑගි! | EVERYONE IS A WINNER",
+            subBanner: "සෑම සතියකම Welloo Grinder එකක් සහ තවත් තෑගි දිනාගන්න!",
+            timerLabel: "ඊළඟ නොමිලේ Grinder ජයග්‍රාහකයා තේරීමට තව:",
+            timerDays: "දින", timerHours: "පැය", timerMins: "විනාඩි", timerSecs: "තත්පර",
+            lblName: "ඔබේ නම (Full Name)",
+            lblPhone: "WhatsApp දුරකථන අංකය (Mobile No)",
+            lblDistrict: "දිස්ත්‍රික්කය (District)",
+            lblTown: "ළඟම නගරය / ගම (City / Town)",
+            lblDealer: "ඔබ සාමාන්‍යයෙන් Power Tools මිලදී ගන්නා වෙළඳසැල / Hardware එක",
+            privacyDisclaimer: '🔒 ඔබ ස්වේච්ඡාවෙන් මෙම විස්තර ඇතුළත් කරන අතර, ඔබේ පෞද්ගලිකත්වය සුරක්ෂිත කෙරේ. Welloo සන්නාමයට අදාළ නිල දැනුම්දීම් සඳහා පමණක් භාවිත කරනු ලැබේ. <a onclick="openModal(\'modal-terms\')">Terms & Privacy Policy</a>',
+            btnSubmit: "ඔබගේ තෑග්ග දැන්ම ලබාගන්න ➔",
+            guarantee: "🔒 මාස 12 ක Official Industrial වගකීමක් සමගින්",
+            districtPlaceholder: "දිස්ත්‍රික්කය තෝරන්න (Select District)",
+            phoneError: "කරුණාකර නිවැරදි ශ්‍රී ලාංකික WhatsApp අංකයක් ඇතුළත් කරන්න (උදා: 0771234567)",
+            reqField: "මෙම තොරතුර ඇතුළත් කිරීම අනිවාර්ය වේ",
+            overlayMsg: "ඔබගේ ලියාපදිංචිය තහවුරු කිරීමට WhatsApp වෙත සම්බන්ධ වෙමින් පවතියි..."
+        },
+        ta: {
+            topBanner: "🏆 அனைவருக்கும் வெற்றி! | EVERYONE IS A WINNER",
+            subBanner: "ஒவ்வொரு வாரமும் Welloo Grinder மற்றும் பல பரிசுகளை வெல்லுங்கள்!",
+            timerLabel: "அடுத்த இலவச Grinder வெற்றியாளருக்கு இன்னும்:",
+            timerDays: "நாட்கள்", timerHours: "மணி", timerMins: "நிமிடங்கள்", timerSecs: "வினாடிகள்",
+            lblName: "உங்கள் பெயர் (Full Name)",
+            lblPhone: "WhatsApp தொலைபேசி எண் (Mobile No)",
+            lblDistrict: "மாவட்டம் (District)",
+            lblTown: "அருகில் உள்ள நகரம் / ஊர் (City / Town)",
+            lblDealer: "நீங்கள் வழக்கமாக Power Tools வாங்கும் கடை / வன்பொருள் கடை",
+            privacyDisclaimer: '🔒 நீங்கள் தன்னார்வமாக இந்த விவரங்களைச் சமர்ப்பிக்கிறீர்கள். உங்கள் தனியுரிமை மதிக்கப்படும் மற்றும் Welloo தொடர்பான தகவல்களுக்கு மட்டுமே பயன்படுத்தப்படும். <a onclick="openModal(\'modal-terms\')">Terms & Privacy Policy</a>',
+            btnSubmit: "உங்கள் உத்தரவாதப் பரிசை இப்போது பெறுங்கள் ➔",
+            guarantee: "🔒 12 மாத அதிகாரப்பூர்வ Industrial உத்தரவாதத்துடன்",
+            districtPlaceholder: "மாவட்டத்தை தேர்ந்தெடுக்கவும் (Select District)",
+            phoneError: "தயவுசெய்து சரியான இலங்கை WhatsApp எண்ணை உள்ளிடவும் (எ.கா: 0771234567)",
+            reqField: "இந்தப் புலத்தை நிரப்புவது கட்டாயமாகும்",
+            overlayMsg: "உங்கள் பதிவை முடிக்க WhatsApp மூலம் இணைக்கிறோம்..."
+        },
+        en: {
+            topBanner: "🏆 EVERYONE IS A WINNER! | 100% GUARANTEED",
+            subBanner: "Win a Welloo Grinder Every Week + More!",
+            timerLabel: "Next lucky winner to get a FREE Grinder in:",
+            timerDays: "Days", timerHours: "Hrs", timerMins: "Mins", timerSecs: "Secs",
+            lblName: "Full Name",
+            lblPhone: "WhatsApp Mobile Number",
+            lblDistrict: "District",
+            lblTown: "Nearest City / Town",
+            lblDealer: "Shop / Hardware store where you buy Power Tools",
+            privacyDisclaimer: '🔒 You submit your details voluntarily. We respect your privacy and will use them exclusively for Welloo brand communications. <a onclick="openModal(\'modal-terms\')">Terms & Privacy Policy</a>',
+            btnSubmit: "Claim Your Guaranteed Prize ➔",
+            guarantee: "🔒 12 Months Official Industrial Warranty",
+            districtPlaceholder: "Select District",
+            phoneError: "Please enter a valid Sri Lankan WhatsApp mobile number (e.g. 0771234567)",
+            reqField: "This field is required",
+            overlayMsg: "Connecting you via WhatsApp to finalize your registration..."
+        }
+    };
+
+    const waTemplates = {
+        si: (d) => `ආයුබෝවන් Welloo Sri Lanka,%0A%0Aමම 'Always Dinum Bonanza' සඳහා ලියාපදිංචි වීමට කැමැත්තෙමි.%0A` +
+                  `*නම:* ${d.name}%0A` +
+                  `*දුරකථන අංකය:* ${d.phone}%0A` +
+                  `*දිස්ත්‍රික්කය:* ${d.district}%0A` +
+                  `*නගරය/ගම:* ${d.town}%0A` +
+                  `*මිලදී ගන්නා වෙළඳසැල:* ${d.dealer}%0A` +
+                  `*භාෂාව:* Sinhala`,
+        
+        ta: (d) => `வணக்கம் Welloo Sri Lanka,%0A%0Aநான் 'Always Dinum Bonanza' போட்டியில் பதிவு செய்ய விரும்புகிறேன்.%0A` +
+                  `*பெயர்:* ${d.name}%0A` +
+                  `*தொலைபேசி எண்:* ${d.phone}%0A` +
+                  `*மாவட்டம்:* ${d.district}%0A` +
+                  `*நகரம்/ஊர்:* ${d.town}%0A` +
+                  `*வாங்கும் கடை:* ${d.dealer}%0A` +
+                  `*மொழி:* Tamil`,
+        
+        en: (d) => `Hi Welloo Sri Lanka,%0A%0AI would like to register for the 'Always Dinum Bonanza'!%0A` +
+                  `*Name:* ${d.name}%0A` +
+                  `*Phone:* ${d.phone}%0A` +
+                  `*District:* ${d.district}%0A` +
+                  `*City/Town:* ${d.town}%0A` +
+                  `*Power Tools Shop:* ${d.dealer}%0A` +
+                  `*Language:* English`
+    };
+
+    const socialEntries = [
+        { name: "Nimal", city: { en: "Gampaha", si: "ගම්පහින්", ta: "கம்பஹாவிலிருந்து" } },
+        { name: "Kasun", city: { en: "Kandy", si: "මහනුවරින්", ta: "கண்டியிலிருந்து" } },
+        { name: "Suresh", city: { en: "Jaffna", si: "යාපනයෙන්", ta: "யாழ்ப்பாணத்திலிருந்து" } },
+        { name: "Pradeep", city: { en: "Colombo", si: "කොළඹින්", ta: "கொழும்பிலிருந்து" } },
+        { name: "Ruwan", city: { en: "Kurunegala", si: "කුරුණෑගලින්", ta: "குருநாகலிலிருந்து" } },
+        { name: "Kamal", city: { en: "Galle", si: "ගාල්ලෙන්", ta: "காலியிலிருந்து" } },
+        { name: "Mohamed", city: { en: "Batticaloa", si: "මඩකලපුවෙන්", ta: "மட்டக்களப்பிலிருந்து" } },
+        { name: "Nuwan", city: { en: "Ratnapura", si: "රත්නපුරෙන්", ta: "இரத்தினபுரியிலிருந்து" } }
+    ];
+
+    const socialProofTemplates = {
+        si: (name, city) => `<strong>${city}</strong> <strong>${name}</strong> Bonanza වෙත එක් විය`,
+        ta: (name, city) => `<strong>${city}</strong> <strong>${name}</strong> Bonanza-வில் இணைந்தார்`,
+        en: (name, city) => `<strong>${name}</strong> from <strong>${city}</strong> just entered the Bonanza`
+    };
+
+    const districts = [
+        { en: "Ampara", si: "අම්පාර", ta: "அம்பாறை" },
+        { en: "Anuradhapura", si: "අනුරාධපුර", ta: "அනුරාධපුරම" },
+        { en: "Badulla", si: "බදුල්ල", ta: "பதுளை" },
+        { en: "Batticaloa", si: "මඩකලපුව", ta: "மட்டக்களப்பு" },
+        { en: "Colombo", si: "කොළඹ", ta: "கொழும்பு" },
+        { en: "Galle", si: "ගාල්ල", ta: "காலி" },
+        { en: "Gampaha", si: "ගම්පහ", ta: "கம்பஹா" },
+        { en: "Hambantota", si: "හම්බන්තොට", ta: "அம்பாந்தோட்டை" },
+        { en: "Jaffna", si: "යාපනය", ta: "யாழ்ப்பாணம்" },
+        { en: "Kalutara", si: "කළුතර", ta: "களுத்துறை" },
+        { en: "Kandy", si: "මහනුවර", ta: "கண்டி" },
+        { en: "Kegalle", si: "කෑගල්ල", ta: "கேகாலை" },
+        { en: "Kilinochchi", si: "කිලිනොච්චිය", ta: "கிளிநොச்சி" },
+        { en: "Kurunegala", si: "කුරුණෑගල", ta: "குருநாகල්" },
+        { en: "Mannar", si: "මන්නාරම", ta: "மන්නார்" },
+        { en: "Matale", si: "මාතලේ", ta: "மாத்தளை" },
+        { en: "Matara", si: "මාතර", ta: "மாத்தறை" },
+        { en: "Moneragala", si: "මොණරාගල", ta: "மொணராகலை" },
+        { en: "Mullaitivu", si: "මුලතිව්", ta: "முல்லைத்தீவு" },
+        { en: "Nuwara Eliya", si: "නුවරඑළිය", ta: "நுவரெலியா" },
+        { en: "Polonnaruwa", si: "පොළොන්නරුව", ta: "பொலன்னறுவை" },
+        { en: "Puttalam", si: "පුත්තලම", ta: "புத்தளம்" },
+        { en: "Ratnapura", si: "රත්නපුර", ta: "இரத்தினபுரி" },
+        { en: "Trincomalee", si: "ත්‍රිකුණාමලය", ta: "திருகோணமலை" },
+        { en: "Vavuniya", si: "වව්නියාව", ta: "வவுனியா" }
+    ];
+
+    function updateDistrictDropdown(lang) {
+        const select = document.getElementById('select-district');
+        const currentValue = select.value;
+        
+        select.innerHTML = `<option value="" disabled ${!currentValue ? 'selected' : ''}>${translations[lang].districtPlaceholder}</option>`;
+        
+        districts.forEach(dist => {
+            let label = dist.en;
+            if (lang === 'si') label = `${dist.en} (${dist.si})`;
+            if (lang === 'ta') label = `${dist.en} (${dist.ta})`;
+            
+            const isSelected = (currentValue === dist.en) ? 'selected' : '';
+            select.innerHTML += `<option value="${dist.en}" ${isSelected}>${label}</option>`;
+        });
+    }
+
+    function setLang(lang, el) {
+        currentLang = lang;
+        document.querySelectorAll('.lang-btn').forEach(btn => btn.classList.remove('active'));
+        if (el) el.classList.add('active');
+        
+        document.getElementById('selected-lang').value = lang.toUpperCase();
+        document.getElementById('top-banner').innerText = translations[lang].topBanner;
+        document.getElementById('sub-banner').innerText = translations[lang].subBanner;
+        
+        document.getElementById('timer-label').innerText = translations[lang].timerLabel;
+        document.getElementById('lbl-days').innerText = translations[lang].timerDays;
+        document.getElementById('lbl-hours').innerText = translations[lang].timerHours;
+        document.getElementById('lbl-mins').innerText = translations[lang].timerMins;
+        document.getElementById('lbl-secs').innerText = translations[lang].timerSecs;
+
+        document.getElementById('lbl-name').innerText = translations[lang].lblName;
+        document.getElementById('lbl-phone').innerText = translations[lang].lblPhone;
+        document.getElementById('lbl-district').innerText = translations[lang].lblDistrict;
+        document.getElementById('lbl-town').innerText = translations[lang].lblTown;
+        document.getElementById('lbl-dealer').innerText = translations[lang].lblDealer;
+        document.getElementById('privacy-disclaimer').innerHTML = translations[lang].privacyDisclaimer;
+        document.getElementById('btn-submit').innerText = translations[lang].btnSubmit;
+        document.getElementById('guarantee-text').innerText = translations[lang].guarantee;
+        document.getElementById('overlay-msg').innerText = translations[lang].overlayMsg;
+
+        updateDistrictDropdown(lang);
+    }
+
+    function initWeeklyCountdown(endDateString) {
+    const finalDeadline = new Date(endDateString).getTime();
+
+    function updateTimer() {
+        const now = new Date();
+        const nowMs = now.getTime();
+
+        // Halt execution if the hard campaign end date has passed
+        if (nowMs >= finalDeadline) {
+            document.getElementById('d-days').innerText = '00';
+            document.getElementById('d-hours').innerText = '00';
+            document.getElementById('d-mins').innerText = '00';
+            document.getElementById('d-secs').innerText = '00';
+            return;
+        }
+
+        // Calculate next Friday at 15:00:00
+        let target = new Date(now);
+        target.setDate(now.getDate() + ((5 + 7 - now.getDay()) % 7));
+        target.setHours(15, 0, 0, 0);
+
+        // If today is Friday past 3 PM, roll over to next Friday
+        if (now >= target) {
+            target.setDate(target.getDate() + 7);
+        }
+
+        // Cap the weekly target if it exceeds the hard final deadline
+        let targetMs = target.getTime();
+        if (targetMs > finalDeadline) {
+            targetMs = finalDeadline;
+        }
+
+        const diff = targetMs - nowMs;
+
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+        const mins = Math.floor((diff / 1000 / 60) % 60);
+        const secs = Math.floor((diff / 1000) % 60);
+
+        document.getElementById('d-days').innerText = String(days).padStart(2, '0');
+        document.getElementById('d-hours').innerText = String(hours).padStart(2, '0');
+        document.getElementById('d-mins').innerText = String(mins).padStart(2, '0');
+        document.getElementById('d-secs').innerText = String(secs).padStart(2, '0');
+    }
+
+    updateTimer();
+    setInterval(updateTimer, 1000);
+}
+
+
+
+    function openModal(id) { document.getElementById(id).classList.add('modal-open'); }
+    function closeModal(id) { document.getElementById(id).classList.remove('modal-open'); }
+
+    function cleanPhoneInput(input) {
+        input.value = input.value.replace(/\D/g, '');
+        clearError(input);
+    }
+
+    function clearError(input) {
+        input.classList.remove('input-error');
+        const errSpan = document.getElementById(input.id + '-error');
+        if (errSpan) errSpan.style.display = 'none';
+    }
+
+    function showError(fieldId, message) {
+        const field = document.getElementById(fieldId);
+        const errSpan = document.getElementById(fieldId + '-error');
+        field.classList.add('input-error');
+        if (errSpan) {
+            errSpan.innerText = message;
+            errSpan.style.display = 'block';
+        }
+    }
+
+    function triggerShake() {
+        const container = document.getElementById('main-container');
+        container.classList.remove('shake-animated');
+        void container.offsetWidth;
+        container.classList.add('shake-animated');
+    }
+
+    function triggerSocialProofToast() {
+        const toast = document.getElementById('social-toast');
+        const toastText = document.getElementById('toast-text');
+
+        const randomEntry = socialEntries[Math.floor(Math.random() * socialEntries.length)];
+        const localizedCity = randomEntry.city[currentLang] || randomEntry.city.en;
+
+        toastText.innerHTML = socialProofTemplates[currentLang](randomEntry.name, localizedCity);
+        toast.classList.add('toast-show');
+
+        setTimeout(() => {
+            toast.classList.remove('toast-show');
+        }, 3800);
+    }
+
+    function startSocialProofLoop() {
+        setTimeout(() => {
+            triggerSocialProofToast();
+            setInterval(() => {
+                triggerSocialProofToast();
+            }, Math.floor(Math.random() * 4000) + 7000);
+        }, 2500);
+    }
+
+    function handleFormSubmit(e) {
+        e.preventDefault();
+        let isValid = true;
+
+        const name = document.getElementById('name').value.trim();
+        const phone = document.getElementById('phone').value.trim();
+        const district = document.getElementById('select-district').value;
+        const town = document.getElementById('town').value.trim();
+        const dealer = document.getElementById('dealer').value.trim();
+
+        if (!name) { showError('name', translations[currentLang].reqField); isValid = false; }
+        if (!district) { showError('select-district', translations[currentLang].reqField); isValid = false; }
+        if (!town) { showError('town', translations[currentLang].reqField); isValid = false; }
+        if (!dealer) { showError('dealer', translations[currentLang].reqField); isValid = false; }
+
+        const slPhoneRegex = /^(07[0-2,4-8]\d{7}|7[0-2,4-8]\d{7})$/;
+        if (!phone || !slPhoneRegex.test(phone)) {
+            showError('phone', translations[currentLang].phoneError);
+            isValid = false;
+        }
+
+        if (!isValid) {
+            triggerShake();
+            return false;
+        }
+
+        const overlay = document.getElementById('overlay');
+        overlay.classList.add('active');
+
+        // Post entry to submit.php asynchronously
+        fetch('submit.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                name: name,
+                phone: phone,
+                district: district,
+                town: town,
+                dealer: dealer,
+                lang: currentLang.toUpperCase()
+            })
+        }).catch(err => console.error('Failed to log to database:', err));
+
+        // Build cross-platform WhatsApp URL
+        const formDataEncoded = {
+            name: encodeURIComponent(name),
+            phone: encodeURIComponent(phone),
+            district: encodeURIComponent(district),
+            town: encodeURIComponent(town),
+            dealer: encodeURIComponent(dealer)
+        };
+
+        const waMessage = waTemplates[currentLang](formDataEncoded);
+        const targetPhone = "94777886966";
+        const waUrl = `https://api.whatsapp.com/send/?phone=${targetPhone}&text=${waMessage}`;
+
+        // Trigger direct page navigation with fallback link
+        setTimeout(() => {
+            const overlayMsg = document.getElementById('overlay-msg');
+            overlayMsg.innerHTML = `${translations[currentLang].overlayMsg}<br><br><a href="${waUrl}" class="fallback-btn">Click here if WhatsApp doesn't open</a>`;
+            window.location.href = waUrl;
+        }, 1200);
+    }
+</script>
+</body>
+</html>
