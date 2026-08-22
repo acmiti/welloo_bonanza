@@ -54,12 +54,11 @@ $users = $stmt->fetchAll();
     </style>
 </head>
 <body>
+<?php require_once __DIR__ . '/../includes/admin_nav.php'; ?>
 <div class="wrapper">
     <div class="header">
         <h1>User Management</h1>
         <div class="nav-links">
-            <a href="dashboard.php">Dashboard</a>
-            <a href="/api/auth/logout.php">Log Out</a>
             <button class="btn" onclick="openCreateModal()">+ New User</button>
         </div>
     </div>

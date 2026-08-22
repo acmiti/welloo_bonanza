@@ -15,8 +15,6 @@ check_access(['admin']);
         .wrapper { max-width: 1100px; margin: 0 auto; }
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #222; flex-wrap: wrap; gap: 12px; }
         h1 { color: #FF6600; font-size: 24px; }
-        .nav-links a { color: #AAA; text-decoration: none; font-size: 13px; font-weight: 600; margin-left: 14px; }
-        .nav-links a:hover { color: #FF9900; }
         .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
         .card { background: #1A1A1A; border: 1px solid #333; padding: 22px; border-radius: 10px; text-decoration: none; display: block; }
         .card h3 { color: #FF9900; font-size: 15px; margin-bottom: 6px; }
@@ -24,12 +22,10 @@ check_access(['admin']);
     </style>
 </head>
 <body>
+<?php require_once __DIR__ . '/../includes/admin_nav.php'; ?>
 <div class="wrapper">
     <div class="header">
         <h1>Welcome, <?= htmlspecialchars($_SESSION['username']) ?></h1>
-        <div class="nav-links">
-            <a href="/api/auth/logout.php">Log Out</a>
-        </div>
     </div>
 
     <div class="cards">
