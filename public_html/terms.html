@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' https:; img-src 'self' blob: data: https:;">
+    <title>Terms & Conditions | Welloo Always Dinum Bonanza</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; }
+        body { background-color: #0A0A0A; color: #FFFFFF; display: flex; flex-direction: column; align-items: center; padding: 20px 12px; }
+        .container { max-width: 620px; width: 100%; background: linear-gradient(180deg, #1A1A1A 0%, #0A0A0A 100%); border: 1px solid #333; border-radius: 16px; padding: 28px 22px; box-shadow: 0 10px 30px rgba(255, 102, 0, 0.15); }
+
+        .back-link { display: inline-block; color: #FF9900; text-decoration: none; font-size: 13px; font-weight: 700; margin-bottom: 18px; }
+        .back-link:hover { text-decoration: underline; }
+
+        .logo { width: 100%; max-width: 220px; height: auto; display: block; margin: 0 auto 20px; filter: drop-shadow(0 5px 15px rgba(255,102,0,0.3)); }
+
+        .lang-picker { display: flex; justify-content: center; gap: 10px; margin-bottom: 24px; }
+        .lang-btn { background: #222; border: 1px solid #444; color: #AAA; padding: 8px 18px; border-radius: 20px; font-weight: bold; cursor: pointer; font-size: 13px; transition: 0.2s; }
+        .lang-btn.active { background: #FF6600; color: #FFF; border-color: #FF6600; box-shadow: 0 0 10px rgba(255,102,0,0.5); }
+
+        h1 { color: #FF9900; font-size: 20px; text-align: center; margin-bottom: 22px; line-height: 1.4; }
+        h2 { color: #FF9900; font-size: 15px; margin-top: 24px; margin-bottom: 10px; border-bottom: 1px solid #282828; padding-bottom: 6px; }
+        ul { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+        li { font-size: 13.5px; color: #DDD; line-height: 1.6; padding-left: 18px; position: relative; }
+        li::before { content: "•"; color: #FF6600; position: absolute; left: 0; font-weight: 900; }
+        ul ul { margin-top: 10px; }
+
+        .footer { margin-top: 26px; padding-top: 18px; border-top: 1px solid #222; font-size: 11px; color: #777; line-height: 1.6; text-align: center; }
+        .footer-brand { color: #AAA; font-weight: 600; }
+        .footer-brand a { color: #BBB; text-decoration: underline; }
+
+        .external-footer-tech { margin-top: 16px; color: #666; font-size: 11px; text-align: center; }
+        .external-footer-tech a { color: #888; text-decoration: underline; font-weight: 600; }
+        .external-footer-tech a:hover { color: #FF6600; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <a href="index.html" class="back-link" id="back-link">&larr; Back to Registration</a>
+
+    <img src="welloo-always-dinum-logo.webp" alt="Welloo Always Dinum Bonanza" class="logo">
+
+    <div class="lang-picker">
+        <button class="lang-btn" onclick="setLang('si', this)">සිංහල</button>
+        <button class="lang-btn" onclick="setLang('ta', this)">தமிழ்</button>
+        <button class="lang-btn" onclick="setLang('en', this)">English</button>
+    </div>
+
+    <h1 id="page-title">Terms and conditions: Welloo ALWAYS Dinum Bonanza</h1>
+
+    <div id="terms-body"></div>
+
+    <div class="footer">
+        <div class="footer-brand">
+            Copyright &copy; <span id="year"></span> Welloo Sri Lanka by <a href="http://www.rit.lk" target="_blank" rel="noopener noreferrer">RIT Distributors</a>
+        </div>
+    </div>
+</div>
+
+<div class="external-footer-tech">
+    Powered by <a href="http://www.inotrend.net" target="_blank" rel="noopener noreferrer">Catch SL</a>
+</div>
+
+<script>
+    const backLinkText = { si: "← ලියාපදිංචි පිටුවට", ta: "← பதிவுப் பக்கத்திற்குச் செல்ல", en: "← Back to Registration" };
+
+    const termsData = {
+        en: {
+            title: "Terms and conditions: Welloo ALWAYS Dinum Bonanza",
+            sections: [
+                { h: "1. Eligibility and registration", items: [
+                    "The promo is open to all residents of Sri Lanka aged 18 and above.",
+                    "Participants enter by filling out the online registration form at welloo.catchsl.com.",
+                    "Registrants must provide their full legal name, active WhatsApp number, district, city, and preferred power tools dealer.",
+                    "Entry into the weekly draw is completely free.",
+                    "Employees of Welloo, their immediate family members, and affiliated distribution agencies are excluded from winning the prize draw."
+                ]},
+                { h: "2. Weekly live draw and prize structure", items: [
+                    "The campaign runs a weekly live draw broadcast every Friday at 3:00 PM on the official Welloo Facebook page using an automated digital spin wheel, until the campaign's final end date.",
+                    "Each week, one verified registrant wins a brand new Welloo 4-inch industrial angle grinder.",
+                    "All entries submitted up to 3:00 PM every Thursday qualify for that week's Friday 3:00 PM draw. Entries submitted after this deadline move to the following week's pool. This weekly cycle continues until the campaign's final end date.",
+                    "Winners are picked at random during the live stream. System logs verify the selection on camera."
+                ]},
+                { h: "3. Entry multipliers and entry verification", items: [
+                    "Every completed form submission gets one base entry ticket into the draw.",
+                    "Participants can gain extra draw entries by sending proof of engagement via WhatsApp or Facebook:",
+                    ["3x entries: Send a clear photo showing your face next to an authentic Welloo power tool via WhatsApp.",
+                     "10x entries: Send a 10-second video demonstrating or showing a Welloo power tool in active use via WhatsApp.",
+                     "15x entries: Post a photo comment featuring a Welloo tool under the official weekly campaign post on Facebook.",
+                     "25x entries: Post a video comment showing a Welloo tool in action under the official weekly campaign post on Facebook."],
+                    "The Welloo verification team manually reviews and validates all photo and video submissions before adding bonus tickets to the digital wheel.",
+                    "Multipliers apply only to clear, original media showing genuine Welloo products."
+                ]},
+                { h: "4. Discount voucher terms", items: [
+                    "Every registrant receives a digital discount voucher sent via WhatsApp, valid for up to 40% off Maximum Retail Price (MRP) on selected Welloo power tools.",
+                    "To claim the discount, customers must manually present the digital WhatsApp voucher at their selected dealer shop during purchase.",
+                    "Vouchers cannot be exchanged for cash, transferred to third parties, or combined with other store promotions.",
+                    "Discounts apply strictly at authorized Welloo dealer locations."
+                ]},
+                { h: "5. Prize claim and dealer collection procedure", items: [
+                    "The weekly winner receives their prize physically at the local dealer shop specified during registration.",
+                    "Welloo coordinates a set date and time for the winner to visit the shop and collect the tool.",
+                    "The winner must present a valid National Identity Card (NIC) or Passport matching the name on the winning registration entry.",
+                    "If a selected dealer does not currently stock Welloo products, Welloo will register the shop as an authorized dealer to fulfill the prize and supply the store.",
+                    "Winners agree to take part in photo and video documentation during prize collection at the dealer shop. Welloo retains all rights to use this material for promotional purposes across digital and print media."
+                ]},
+                { h: "6. Dealer incentive credit note", items: [
+                    "Participating dealers hosting a winner prize collection receive a LKR 5,000 credit note voucher.",
+                    "The credit note applies exclusively as a direct discount against the dealer's next wholesale stock order of Welloo products.",
+                    "Credit notes are non-transferable and carry no cash value."
+                ]},
+                { h: "7. General conditions and legal disclaimers", items: [
+                    "Welloo reserves the right to disqualify any entry that contains false information, duplicate phone numbers, or fraudulent photo/video submissions.",
+                    "The decision of the Welloo campaign management team regarding entry validity, draw results, and prize fulfillment is final.",
+                    "Welloo reserves the right to update or modify these terms and conditions at any time without prior notice."
+                ]}
+            ]
+        },
+        si: {
+            title: "Welloo ALWAYS දිනුම් Bonanza: නිල කොන්දේසි සහ රෙගුලාසි",
+            sections: [
+                { h: "1. සුදුසුකම් සහ ලියාපදිංචිය", items: [
+                    "වයස අවුරුදු 18 ට වැඩි සියලුම ශ්‍රී ලාංකිකයන්ට මෙම ප්‍රවර්ධන වැඩසටහන සඳහා ඉදිරිපත් විය හැක.",
+                    "welloo.catchsl.com වෙබ් අඩවියට පිවිස අන්තර්ජාලය ඔස්සේ පෝරමය පිරවීමෙන් තරගයට ඇතුළත් විය යුතුය.",
+                    "අයදුම්කරුගේ සම්පූර්ණ නම, සක්‍රීය WhatsApp අංකය, දිස්ත්‍රික්කය, නගරය සහ තමන් කැමති පවර් ටූල්ස් අලෙවි නියෝජිතයාගේ නම නිවැරදිව ඇතුළත් කළ යුතුය.",
+                    "සතිපතා දිනුම් ඇදීමට ඇතුළත් වීම සඳහා කිසිදු මුදලක් අය නොකෙරේ.",
+                    "Welloo ආයතනයේ සේවකයන්, ඔවුන්ගේ පවුල්වල සාමාජිකයන් සහ බෙදාහැරීමේ නියෝජිත ආයතනවල සේවකයන්ට මෙයට සහභාගි විය නොහැක."
+                ]},
+                { h: "2. සතිපතා සජීවී දිනුම් ඇදීම සහ තෑගි", items: [
+                    "සතිපතා සිකුරාදා දින සවස 3.00ට Welloo නිල Facebook පිටුව ඔස්සේ සජීවීව ඩිජිටල් කැරකෙන රෝදයක් (digital spin wheel) මගින් ජයග්‍රාහකයා තෝරා ගැනේ. මෙය Bonanza වැඩසටහන අවසන් වන දිනය දක්වා සිදු කෙරේ.",
+                    "සෑම සතියකම එක් ජයග්‍රාහකයෙකුට Welloo අඟල් 4 ඉන්ඩස්ට්‍රියල් ඇන්ගල් ග්‍රයින්ඩරයක් හිමිවේ.",
+                    "සතියේ දිනුම් ඇදීමට ඇතුළත් වීමට සෑම බ්‍රහස්පතින්දාවකම සවස 3.00 ට පෙර ලියාපදිංචි විය යුතුය (එම සතියේ සිකුරාදා සවස 3.00 දිනුම් ඇදීම සඳහා). ඊට පසු ලැබෙන අයදුම්පත් ඊළඟ සතියේ දිනුම් ඇදීමට එකතු වේ. මෙම සතිපතා චක්‍රය Bonanza වැඩසටහන අවසන් වන දිනය දක්වා අඛණ්ඩව සිදු කෙරේ.",
+                    "ජයග්‍රාහකයන් තෝරා ගැනීම සජීවී විකාශය අතරතුර පද්ධතිය මගින් අහඹු ලෙස සිදු කෙරේ."
+                ]},
+                { h: "3. දිනුම් වාර ගණන වැඩි කරගැනීමේ ක්‍රමවේදය", items: [
+                    "පෝරමය සම්පූර්ණ කරන සෑම අයෙකුටම එක් මූලික ඇතුළත්වීමේ ටිකට් පතක් හිමිවේ.",
+                    "WhatsApp සහ Facebook හරහා සාක්ෂි එවමින් දිනුම් වාර ගණන වැඩි කරගත හැක:",
+                    ["3x වාරයක්: Welloo මෙවලමක් සමග තමන්ගේ මුහුණ පැහැදිලිව පෙනෙන ඡායාරූපයක් WhatsApp මගින් එවීම.",
+                     "10x වාරයක්: Welloo මෙවලමක් භාවිත කරන තත්පර 10 ක වීඩියෝවක් WhatsApp මගින් එවීම.",
+                     "15x වාරයක්: Facebook හි නිල සතිපතා පෝස්ටුව යටතේ Welloo මෙවලම සමග ඇති ඡායාරූපයක් කමෙන්ට් කිරීම.",
+                     "25x වාරයක්: Facebook හි නිල සතිපතා පෝස්ටුව යටතේ Welloo මෙවලම භාවිත කරන වීඩියෝවක් කමෙන්ට් කිරීම."],
+                    "එවනු ලබන සියලුම ඡායාරූප සහ වීඩියෝ අපගේ කණ්ඩායම මගින් පරීක්ෂා කිරීමෙන් පසුව අමතර ටිකට්පත් ඩිජිටල් රෝදයට එකතු කරනු ලැබේ.",
+                    "සැබෑ Welloo නිෂ්පාදන පැහැදිලිව දක්නට ඇති මූලික ඡායාරූප සහ වීඩියෝ සඳහා පමණක් අමතර දිනුම් වාර හිමිවේ."
+                ]},
+                { h: "4. වට්ටම් වවුචර භාවිතය", items: [
+                    "ලියාපදිංචි වන සෑම අයෙකුටම Welloo පවර් ටූල්ස් සඳහා සටහන් කළ උපරිම සිල්ලර මිලෙන් (MRP) 40% දක්වා වට්ටම් හිමිවන ඩිජිටල් වවුචරයක් WhatsApp මගින් ලැබෙනු ඇත.",
+                    "වට්ටම ලබා ගැනීමට නම් භාණ්ඩ ලබාගන්නා අවස්ථාවේදී අදාළ WhatsApp වවුචරය අලෙවි නියෝජිතයාට පෙන්විය යුතුය.",
+                    "මෙම වවුචරය මුදලට හුවමාරු කිරීමට, වෙනත් අයෙකුට පැවරීමට හෝ ආයතනයේ වෙනත් ප්‍රවර්ධන වැඩසටහන් සමග ඒකාබද්ධ කිරීමට නොහැක.",
+                    "වට්ටම් හිමිවන්නේ බලපත්‍රලාභී Welloo අලෙවි නියෝජිතයන්ගෙන් භාණ්ඩ මිලදී ගැනීමේදී පමණි."
+                ]},
+                { h: "5. තෑගි පිරිනැමීම සහ ලබාගැනීම", items: [
+                    "සතිපතා ජයග්‍රාහකයා ලියාපදිංචි වීමේදී සඳහන් කළ අලෙවි නියෝජිත ආයතනයෙන් තෑගි ලබාගත යුතුය.",
+                    "ජයග්‍රාහකයා අලෙවි සැලට පැමිණ තෑග්ග ලබාගත යුතු දිනය සහ වේලාව Welloo ආයතනය මගින් වේලාව වෙන්කර දැනුම් දෙනු ලැබේ.",
+                    "තෑග්ග ලබා ගැනීමට පැමිණෙන විට ලියාපදිංචි වූ නමට අදාළ ජාතික හැඳුනුම්පත හෝ විදේශ ගමන් බලපත්‍රය ඉදිරිපත් කළ යුතුය.",
+                    "ජයග්‍රාහකයා තෝරාගත් අලෙවි සැලේ Welloo නිෂ්පාදන නොමැති නම්, එම වෙළඳසැල නිල අලෙවි නියෝජිතයෙකු ලෙස ලියාපදිංචි කර තෑග්ග ලබාදීමට කටයුතු කරනු ලැබේ.",
+                    "තෑග්ග ලබාගන්නා අවස්ථාවේදී ගනු ලබන ඡායාරූප සහ වීඩියෝ ප්‍රචාරණ කටයුතු සඳහා භාවිත කිරීමට Welloo ආයතනයට පූර්ණ අයිතිය ඇත."
+                ]},
+                { h: "6. අලෙවි නියෝජිතයන් සඳහා වන දීමනා", items: [
+                    "ජයග්‍රාහකයන්ට තෑගි පිරිනමන අලෙවි නියෝජිතයන්ට රුපියල් 5,000 ක ක්‍රෙඩිට් නොට් වවුචරයක් හිමිවේ.",
+                    "මෙම ක්‍රෙඩිට් නොට් එක අලෙවි නියෝජිතයා මීළඟට ලබාගන්නා Welloo තොග ඇණවුමෙන් අඩු කරගත හැක.",
+                    "මෙය වෙනත් අයෙකුට පැවරීමට හෝ මුදලින් ලබාගැනීමට නොහැක."
+                ]},
+                { h: "7. සාමාන්‍ය කොන්දේසි", items: [
+                    "අසත්‍ය තොරතුරු, ව්‍යාජ දුරකථන අංක හෝ වෙනත් අයගේ ඡායාරූප/වීඩියෝ ඉදිරිපත් කරන අය තරගයෙන් ඉවත් කිරීමට Welloo ආයතනයට පූර්ණ බලතල ඇත.",
+                    "තරගයේ සියලුම තීරණ සහ ජයග්‍රාහකයන් තේරීම සම්බන්ධයෙන් Welloo කළමනාකාරීත්වයේ තීරණය අවසාන තීරණය වේ.",
+                    "පූර්ව දැනුම්දීමකින් තොරව මෙම කොන්දේසි වෙනස් කිරීමේ හෝ යාවත්කාලීන කිරීමේ අයිතිය Welloo ආයතනය සතුය."
+                ]}
+            ]
+        },
+        ta: {
+            title: "Welloo ALWAYS දිනුම් Bonanza: விதிகளும் நிபந்தனைகளும்",
+            sections: [
+                { h: "1. தகுதி மற்றும் பதிவுகள்", items: [
+                    "18 வயது நிறைந்த அனைத்து இலங்கைவாசிகளும் இதில் பங்கேற்கலாம்.",
+                    "welloo.catchsl.com எனும் இணையதளத்திற்குச் சென்று படிவத்தைப் பூர்த்தி செய்வதன் மூலம் போட்டியில் இணையலாம்.",
+                    "போட்டியாளரின் முழுப் பெயர், இயங்கு நிலையில் உள்ள WhatsApp எண், மாவட்டம், நகரம் மற்றும் விருப்பமான பவர் டூல்ஸ் விநியோகஸ்தரின் பெயரைச் சரியாகப் பதிய வேண்டும்.",
+                    "வாராந்தக் குலுக்கலில் பங்கேற்பதற்கு எந்தக் கட்டணமும் கிடையாது.",
+                    "Welloo நிறுவனத்தின் ஊழியர்கள், அவர்களின் குடும்ப உறுப்பினர்கள் மற்றும் விநியோக முகவர் நிறுவனங்களின் ஊழியர்கள் இதில் பங்கேற்க முடியாது."
+                ]},
+                { h: "2. வாராந்த நேரலை குலுக்கல் மற்றும் பரிசுகள்", items: [
+                    "ஒவ்வொரு வெள்ளிக்கிழமையும் மதியம் 3.00 மணிக்கு Welloo நிறுவனத்தின் அதிகாரப்பூர்வ Facebook பக்கத்தில் நேரலை மூலமாக டிஜிட்டல் சுழல் சக்கரம் (digital spin wheel) வழியாக வெற்றியாளர் தேர்ந்தெடுக்கப்படுவார். இது Bonanza பிரச்சாரம் நிறைவடையும் நாள் வரை தொடரும்.",
+                    "ஒவ்வொரு வாரமும் ஒரு வெற்றியாளருக்கு Welloo 4-இன்ச் தொழில்முறை ஆங்கிள் கிரைண்டர் வழங்கப்படும்.",
+                    "அந்தந்த வாரக் குலுக்கலில் பங்கேற்க ஒவ்வொரு வியாழக்கிழமையும் மதியம் 3.00 மணிக்கு முன் பதிவு செய்ய வேண்டும் (அந்த வாரத்தின் வெள்ளிக்கிழமை மதியம் 3.00 மணி குலுக்கலுக்காக). அதற்குப் பிறகு வரும் பதிவுகள் அடுத்த வாரக் குலுக்கலில் சேர்க்கப்படும். இந்த வாராந்த சுழற்சி Bonanza பிரச்சாரம் நிறைவடையும் நாள் வரை தொடரும்.",
+                    "வெற்றியாளர்கள் நேரலையின் போது கணினி அமைப்பு மூலம் தற்செயலாகத் தேர்ந்தெடுக்கப்படுவர்."
+                ]},
+                { h: "3. வெற்றி வாய்ப்புகளை அதிகரிப்பதற்கான வழிகள்", items: [
+                    "படிவத்தைப் பூர்த்தி செய்யும் அனைவருக்கும் ஒரு அடிப்படைப் பதிவுச் சீட்டு வழங்கப்படும்.",
+                    "WhatsApp மற்றும் Facebook மூலம் சான்றுகளை அனுப்பி வெற்றி வாய்ப்புகளைப் பெருக்கிக் கொள்ளலாம்:",
+                    ["3 மடங்கு வாய்ப்பு: Welloo கருவியுடன் உங்கள் முகம் தெளிவாகத் தெரியும் புகைப்படத்தை WhatsApp இல் அனுப்ப வேண்டும்.",
+                     "10 மடங்கு வாய்ப்பு: Welloo கருவியைப் பயன்படுத்தும் 10 வினாடி வீடியோவை WhatsApp இல் அனுப்ப வேண்டும்.",
+                     "15 மடங்கு வாய்ப்பு: Facebook இன் அதிகாரப்பூர்வ வாராந்தப் பதிவின் கீழ் Welloo கருவியுடன் உள்ள புகைப்படத்தைப் பின்னூட்டமாக (comment) இட வேண்டும்.",
+                     "25 மடங்கு வாய்ப்பு: Facebook இன் அதிகாரப்பூர்வ வாராந்தப் பதிவின் கீழ் Welloo கருவியைப் பயன்படுத்தும் வீடியோவைப் பின்னூட்டமாக இட வேண்டும்."],
+                    "அனுப்பப்படும் அனைத்துப் புகைப்படங்களும் வீடியோக்களும் எங்கள் குழுவால் சரிபார்க்கப்பட்ட பின்னரே கூடுதல் வாய்ப்புகள் டிஜிட்டல் சக்கரத்துடன் சேர்க்கப்படும்.",
+                    "அசல் Welloo தயாரிப்புகள் தெளிவாகத் தெரியும் புகைப்படங்கள் மற்றும் வீடியோக்களுக்கு மட்டுமே கூடுதல் வாய்ப்புகள் வழங்கப்படும்."
+                ]},
+                { h: "4. தள்ளுபடி கூப்பன்களைப் பயன்படுத்துதல்", items: [
+                    "பதிவு செய்யும் ஒவ்வொருவருக்கும் Welloo பவர் டூல்ஸ்களுக்கான அதிகபட்ச சில்லறை விலையில் (MRP) 40% வரை தள்ளுபடி பெறக்கூடிய டிஜிட்டல் கூப்பன் WhatsApp மூலம் அனுப்பப்படும்.",
+                    "தள்ளுபடியைப் பெற, பொருட்களை வாங்கும் போது அந்த WhatsApp கூப்பனை விநியோகஸ்தரிடம் காண்பிக்க வேண்டும்.",
+                    "இந்தக் கூப்பனைப் பணமாக மாற்றவோ, வேறு நபருக்குக் கைமாற்றவோ அல்லது நிறுவனத்தின் பிற சலுகைகளுடன் இணைத்துப்பயன்படுத்தவோ முடியாது.",
+                    "அங்கீகரிக்கப்பட்ட Welloo விநியோகஸ்தர்களிடம் பொருட்களை வாங்கும் போது மட்டுமே இத்தள்ளுபடி செல்லுபடியாகும்."
+                ]},
+                { h: "5. பரிசுகளைப் பெற்றுக்கொள்ளும் முறை", items: [
+                    "வாராந்த வெற்றியாளர் பதிவு செய்யும் போது குறிப்பிட்ட விநியோகஸ்தர் நிலையத்திலேயே பரிசைப் பெற்றுக் கொள்ள வேண்டும்.",
+                    "வெற்றியாளர் கடைக்கு வந்து பரிசைப் பெற்றுக்கொள்வதற்கான நாள் மற்றும் நேரத்தை Welloo நிறுவனம் முன் கூட்டியே அறிவிக்கும்.",
+                    "பரிசைப் பெற வரும்போது பதிவு செய்த பெயருக்கான தேசிய அடையாள அட்டை அல்லது கடவுச்சீட்டைச் சமர்ப்பிக்க வேண்டும்.",
+                    "வெற்றியாளர் தேர்ந்தெடுத்த கடையில் Welloo தயாரிப்புகள் இல்லாத பட்சத்தில், அக்கடையை அதிகாரப்பூர்வ விநியோகஸ்தராகப் பதிவு செய்து பரிசு வழங்க ஏற்பாடு செய்யப்படும்.",
+                    "பரிசு வழங்கும் போது எடுக்கப்படும் புகைப்படங்கள் மற்றும் வீடியோக்களை விளம்பர நோக்கங்களுக்காகப் பயன்படுத்த Welloo நிறுவனத்திற்கு முழு உரிமை உண்டு."
+                ]},
+                { h: "6. விநியோகஸ்தர்களுக்கான சலுகைகள்", items: [
+                    "வெற்றியாளர்களுக்குப் பரிசுகளை வழங்கும் விநியோகஸ்தர்களுக்கு ரூ. 5,000 மதிப்புள்ள கிரெடிட் நோட் கூப்பன் வழங்கப்படும்.",
+                    "இந்தக் கிரெடிட் நோட்டை விநியோகஸ்தர் அடுத்துக் கொள்முதல் செய்யும் Welloo மொத்தக் கொள்முதல் ஆர்டரில் கழித்துக் கொள்ளலாம்.",
+                    "இதை வேறு நபருக்கு மாற்றவோ அல்லது பணமாகப் பெறவோ முடியாது."
+                ]},
+                { h: "7. பொதுவான நிபந்தனைகள்", items: [
+                    "தவறான தகவல்கள், போலியான தொலைபேசி எண்கள் அல்லது பிறரின் புகைப்படங்கள்/வீடியோக்களைச் சமர்ப்பிப்பவர்களைப் போட்டியிலிருந்து நீக்க Welloo நிறுவனத்திற்கு முழு அதிகாரம் உள்ளது.",
+                    "போட்டி தொடர்பான அனைத்து முடிவுகளிலும் Welloo நிர்வாகத்தின் முடிவே இறுதியானது.",
+                    "முன் அறிவிப்பின்றி இந்நிபந்தனைகளில் மாற்றங்கள் செய்ய Welloo நிறுவனத்திற்கு உரிமை உண்டு."
+                ]}
+            ]
+        }
+    };
+
+    function renderTerms(lang) {
+        const data = termsData[lang] || termsData.si;
+        document.documentElement.lang = lang;
+        document.getElementById('page-title').innerText = data.title;
+        document.getElementById('back-link').innerText = backLinkText[lang];
+
+        const body = document.getElementById('terms-body');
+        body.innerHTML = '';
+        data.sections.forEach(section => {
+            const h2 = document.createElement('h2');
+            h2.innerText = section.h;
+            body.appendChild(h2);
+
+            const ul = document.createElement('ul');
+            section.items.forEach(item => {
+                if (Array.isArray(item)) {
+                    const subUl = document.createElement('ul');
+                    item.forEach(sub => {
+                        const subLi = document.createElement('li');
+                        subLi.innerText = sub;
+                        subUl.appendChild(subLi);
+                    });
+                    ul.lastElementChild.appendChild(subUl);
+                    return;
+                }
+                const li = document.createElement('li');
+                li.innerText = item;
+                ul.appendChild(li);
+            });
+            body.appendChild(ul);
+        });
+    }
+
+    function setLang(lang, el) {
+        document.querySelectorAll('.lang-btn').forEach(btn => btn.classList.remove('active'));
+        if (el) {
+            el.classList.add('active');
+        } else {
+            const idx = { si: 0, ta: 1, en: 2 }[lang] ?? 0;
+            document.querySelectorAll('.lang-btn')[idx].classList.add('active');
+        }
+        renderTerms(lang);
+
+        const url = new URL(window.location);
+        url.searchParams.set('lang', lang);
+        window.history.replaceState({}, '', url);
+
+        document.getElementById('back-link').href = `index.html`;
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        document.getElementById('year').innerText = new Date().getFullYear();
+        const params = new URLSearchParams(window.location.search);
+        let lang = params.get('lang');
+        if (!['si', 'ta', 'en'].includes(lang)) lang = 'si';
+        setLang(lang);
+    });
+</script>
+</body>
+</html>

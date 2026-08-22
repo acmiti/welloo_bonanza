@@ -104,7 +104,9 @@
         .modal.modal-open { opacity: 1; visibility: visible; }
         .modal-content { background: #1A1A1A; border: 1px solid #444; border-radius: 12px; max-width: 400px; width: 100%; padding: 20px; text-align: left; max-height: 80vh; overflow-y: auto; font-size: 12px; line-height: 1.6; color: #CCC; }
         .modal-content h3 { color: #FF9900; margin-bottom: 12px; }
-        .modal-close { background: #FF6600; color: #000; border: none; font-weight: bold; padding: 8px 16px; border-radius: 6px; cursor: pointer; float: right; margin-top: 12px; }
+        .modal-actions { display: flex; justify-content: flex-end; align-items: center; gap: 10px; margin-top: 16px; }
+        .modal-link-btn { color: #FF9900; text-decoration: underline; font-weight: bold; font-size: 12px; cursor: pointer; }
+        .modal-close { background: #FF6600; color: #000; border: none; font-weight: bold; padding: 8px 16px; border-radius: 6px; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -209,9 +211,12 @@
 
 <div class="modal" id="modal-terms">
     <div class="modal-content">
-        <h3>Terms & Privacy Policy</h3>
-        <p>By submitting your details, you voluntarily participate in the Welloo Always Dinum Bonanza campaign organized by RIT Distributors. We respect your privacy and commit to using your information solely for official campaign updates, prize notifications, and Welloo brand offers. Your data will never be sold or shared with third parties.</p>
-        <button class="modal-close" onclick="closeModal('modal-terms')">OK</button>
+        <h3 id="modal-title">Terms & Privacy Policy</h3>
+        <p id="modal-body">By submitting your details, you voluntarily participate in the Welloo Always Dinum Bonanza campaign organized by RIT Distributors. We respect your privacy and commit to using your information solely for official campaign updates, prize notifications, and Welloo brand offers. Your data will never be sold or shared with third parties.</p>
+        <div class="modal-actions">
+            <a id="modal-read-full" class="modal-link-btn" href="terms.html?lang=si" target="_blank" rel="noopener noreferrer">Read Full Terms</a>
+            <button class="modal-close" id="modal-ok-btn" onclick="closeModal('modal-terms')">OK</button>
+        </div>
     </div>
 </div>
 
@@ -220,7 +225,7 @@
 
     document.addEventListener("DOMContentLoaded", function () {
         document.getElementById('year').innerText = new Date().getFullYear();
-        updateDistrictDropdown(currentLang);
+        setLang(currentLang, document.querySelector('.lang-btn.active'));
         initWeeklyCountdown();
         startSocialProofLoop();
     });
@@ -242,7 +247,11 @@
             districtPlaceholder: "දිස්ත්‍රික්කය තෝරන්න (Select District)",
             phoneError: "කරුණාකර නිවැරදි ශ්‍රී ලාංකික WhatsApp අංකයක් ඇතුළත් කරන්න (උදා: 0771234567)",
             reqField: "මෙම තොරතුර ඇතුළත් කිරීම අනිවාර්ය වේ",
-            overlayMsg: "ඔබගේ ලියාපදිංචිය තහවුරු කිරීමට WhatsApp වෙත සම්බන්ධ වෙමින් පවතියි..."
+            overlayMsg: "ඔබගේ ලියාපදිංචිය තහවුරු කිරීමට WhatsApp වෙත සම්බන්ධ වෙමින් පවතියි...",
+            modalTitle: "නියම සහ පෞද්ගලිකත්ව ප්‍රතිපත්තිය",
+            modalBody: "ඔබ ස්වේච්ඡාවෙන් මෙම විස්තර ඇතුළත් කිරීමෙන් RIT Distributors විසින් සංවිධානය කරන Welloo Always Dinum Bonanza ප්‍රවර්ධන වැඩසටහනට සහභාගී වේ. ඔබේ පෞද්ගලිකත්වය අපි ගරු කරන අතර, ඔබේ තොරතුරු නිල ප්‍රචාරණ යාවත්කාලීන, තෑගි දැනුම්දීම් සහ Welloo සන්නාම දීමනා සඳහා පමණක් භාවිත කරමු. ඔබේ දත්ත කිසිවිටෙක තෙවන පාර්ශවයන් සමඟ විකිණීමට හෝ බෙදාගැනීමට ලක් නොකෙරේ.",
+            modalOk: "හරි",
+            modalReadFull: "කොන්දේසි සම්පුර්ණයෙන් කියවන්න"
         },
         ta: {
             topBanner: "🏆 அனைவருக்கும் வெற்றி! | EVERYONE IS A WINNER",
@@ -260,7 +269,11 @@
             districtPlaceholder: "மாவட்டத்தை தேர்ந்தெடுக்கவும் (Select District)",
             phoneError: "தயவுசெய்து சரியான இலங்கை WhatsApp எண்ணை உள்ளிடவும் (எ.கா: 0771234567)",
             reqField: "இந்தப் புலத்தை நிரப்புவது கட்டாயமாகும்",
-            overlayMsg: "உங்கள் பதிவை முடிக்க WhatsApp மூலம் இணைக்கிறோம்..."
+            overlayMsg: "உங்கள் பதிவை முடிக்க WhatsApp மூலம் இணைக்கிறோம்...",
+            modalTitle: "விதிமுறைகள் மற்றும் தனியுரிமைக் கொள்கை",
+            modalBody: "உங்கள் விவரங்களைத் தானாக முன்வந்து சமர்ப்பிப்பதன் மூலம், RIT Distributors நிறுவனத்தால் ஏற்பாடு செய்யப்படும் Welloo Always Dinum Bonanza பிரச்சாரத்தில் நீங்கள் பங்கேற்கிறீர்கள். உங்கள் தனியுரிமையை நாங்கள் மதிக்கிறோம், மேலும் உங்கள் தகவல்களை அதிகாரப்பூர்வ பிரச்சார அறிவிப்புகள், பரிசு அறிவிப்புகள் மற்றும் Welloo பிராண்ட் சலுகைகளுக்கு மட்டுமே பயன்படுத்துவோம். உங்கள் தரவு மூன்றாம் தரப்பினருடன் விற்கப்படவோ பகிரப்படவோ மாட்டாது.",
+            modalOk: "சரி",
+            modalReadFull: "முழு விதிமுறைகளைப் படிக்க"
         },
         en: {
             topBanner: "🏆 EVERYONE IS A WINNER! | 100% GUARANTEED",
@@ -278,7 +291,11 @@
             districtPlaceholder: "Select District",
             phoneError: "Please enter a valid Sri Lankan WhatsApp mobile number (e.g. 0771234567)",
             reqField: "This field is required",
-            overlayMsg: "Connecting you via WhatsApp to finalize your registration..."
+            overlayMsg: "Connecting you via WhatsApp to finalize your registration...",
+            modalTitle: "Terms & Privacy Policy",
+            modalBody: "By submitting your details, you voluntarily participate in the Welloo Always Dinum Bonanza campaign organized by RIT Distributors. We respect your privacy and commit to using your information solely for official campaign updates, prize notifications, and Welloo brand offers. Your data will never be sold or shared with third parties.",
+            modalOk: "OK",
+            modalReadFull: "Read Full Terms"
         }
     };
 
@@ -393,6 +410,12 @@
         document.getElementById('btn-submit').innerText = translations[lang].btnSubmit;
         document.getElementById('guarantee-text').innerText = translations[lang].guarantee;
         document.getElementById('overlay-msg').innerText = translations[lang].overlayMsg;
+
+        document.getElementById('modal-title').innerText = translations[lang].modalTitle;
+        document.getElementById('modal-body').innerText = translations[lang].modalBody;
+        document.getElementById('modal-ok-btn').innerText = translations[lang].modalOk;
+        document.getElementById('modal-read-full').innerText = translations[lang].modalReadFull;
+        document.getElementById('modal-read-full').href = `terms.html?lang=${lang}`;
 
         updateDistrictDropdown(lang);
     }
