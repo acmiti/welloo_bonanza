@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/../includes/auth.php';
 
-check_access(['admin', 'data_entry']);
+check_access(['admin', 'draw_manager', 'data_entry']);
 
 $isAdmin = $_SESSION['role'] === 'admin';
 
