@@ -2,6 +2,28 @@
 require_once __DIR__ . '/../includes/auth.php';
 
 check_access(['admin', 'data_entry']);
+
+$isAdmin = $_SESSION['role'] === 'admin';
+
+$batchFilter = (int) ($_GET['batch_id'] ?? 0);
+
+$batchListStmt = $pdo->query("SELECT id, batch_name FROM draw_batches ORDER BY id DESC");
+$batchList = $batchListStmt->fetchAll();
+
+$sql = "SELECT e.id, e.name, e.phone, e.email, e.invoice_number, e.district, e.town, e.dealer,
+               e.language, e.is_winner, e.batch_id, e.created_at, b.batch_name
+        FROM bonanza_entries e
+        LEFT JOIN draw_batches b ON b.id = e.batch_id";
+$params = [];
+if ($batchFilter > 0) {
+    $sql .= " WHERE e.batch_id = :batch_id";
+    $params[':batch_id'] = $batchFilter;
+}
+$sql .= " ORDER BY e.id DESC LIMIT 200";
+
+$stmt = $pdo->prepare($sql);
+$stmt->execute($params);
+$entries = $stmt->fetchAll();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -12,10 +34,49 @@ check_access(['admin', 'data_entry']);
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; }
         body { background: #0F0F0F; color: #FFF; padding: 20px; }
-        .wrapper { max-width: 1100px; margin: 0 auto; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #222; }
+        .wrapper { max-width: 1250px; margin: 0 auto; padding-bottom: 70px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #222; flex-wrap: wrap; gap: 12px; }
         h1 { color: #FF6600; font-size: 24px; }
-        .placeholder { background: #1A1A1A; border: 1px solid #333; border-radius: 10px; padding: 40px; text-align: center; color: #888; }
+        .nav-links { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .btn { background: #FF6600; color: #000; border: none; padding: 10px 18px; font-weight: bold; border-radius: 6px; font-size: 14px; cursor: pointer; text-decoration: none; display: inline-block; }
+        .btn-secondary { background: #333; color: #FFF; }
+        .btn-danger { background: #FF3333; color: #FFF; }
+        .btn-small { padding: 6px 10px; font-size: 11px; }
+        select.batch-filter { background: #141414; border: 1px solid #333; color: #FFF; padding: 9px 12px; border-radius: 6px; font-size: 13px; }
+
+        table { width: 100%; border-collapse: collapse; background: #1A1A1A; border-radius: 10px; overflow: hidden; border: 1px solid #333; }
+        th, td { padding: 11px 12px; text-align: left; font-size: 12.5px; border-bottom: 1px solid #2A2A2A; white-space: nowrap; }
+        th { background: #222; color: #AAA; text-transform: uppercase; font-size: 10.5px; }
+        tr:hover { background: #202020; }
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; }
+        .badge-lang { background: #333; color: #FF9900; }
+        .badge-winner { background: rgba(37, 211, 102, 0.15); color: #25D366; }
+        .muted { color: #666; }
+
+        .row-actions { display: flex; gap: 6px; }
+        .row-actions button { background: #262626; color: #DDD; border: 1px solid #3A3A3A; padding: 5px 9px; border-radius: 6px; font-size: 11px; cursor: pointer; }
+        .row-actions button:hover { border-color: #FF6600; color: #FF9900; }
+        .row-actions button.del-btn:hover { border-color: #FF3333; color: #FF6B6B; }
+
+        #bulk-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: #1A1A1A; border-top: 2px solid #FF6600; padding: 14px 20px; display: none; justify-content: center; align-items: center; gap: 18px; z-index: 250; box-shadow: 0 -4px 20px rgba(0,0,0,0.5); }
+        #bulk-bar.show { display: flex; }
+        #bulk-count { font-size: 13px; font-weight: 700; color: #DDD; }
+
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 300; padding: 20px; }
+        .modal-overlay.open { display: flex; }
+        .modal-box { background: #1A1A1A; border: 1px solid #444; border-radius: 12px; max-width: 460px; width: 100%; padding: 24px; }
+        .modal-box h2 { color: #FF9900; font-size: 17px; margin-bottom: 18px; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+        .form-group label { font-size: 12px; color: #DDD; font-weight: 600; }
+        .form-group input { padding: 10px 12px; background: #141414; border: 1px solid #333; border-radius: 6px; color: #FFF; font-size: 13.5px; outline: none; }
+        .form-group input:focus { border-color: #FF6600; }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; }
+        .modal-error { display: none; background: rgba(255, 51, 51, 0.1); border: 1px solid #FF3333; color: #FF6B6B; font-size: 12px; font-weight: 600; padding: 8px 10px; border-radius: 6px; margin-bottom: 12px; }
+        .modal-box p.confirm-text { font-size: 13.5px; color: #DDD; line-height: 1.5; margin-bottom: 6px; }
+
+        #toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(80px); background: #1A1A1A; border: 1px solid #FF6600; border-radius: 8px; padding: 10px 18px; font-size: 13px; opacity: 0; transition: 0.3s ease; z-index: 300; }
+        #toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
     </style>
 </head>
 <body>
@@ -23,8 +84,259 @@ check_access(['admin', 'data_entry']);
 <div class="wrapper">
     <div class="header">
         <h1>Entries</h1>
+        <div class="nav-links">
+            <form method="GET" style="display:flex; gap:8px;">
+                <select class="batch-filter" name="batch_id" onchange="this.form.submit()">
+                    <option value="0">All Batches</option>
+                    <?php foreach ($batchList as $b): ?>
+                        <option value="<?= (int) $b['id'] ?>" <?= $batchFilter === (int) $b['id'] ? 'selected' : '' ?>>
+                            <?= htmlspecialchars($b['batch_name']) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </form>
+            <a class="btn" href="/api/export_entries.php<?= $batchFilter > 0 ? '?batch_id=' . $batchFilter : '' ?>">Export to CSV</a>
+        </div>
     </div>
-    <div class="placeholder">Entry management tools are coming soon.</div>
+
+    <div style="overflow-x:auto;">
+    <table>
+        <thead>
+            <tr>
+                <?php if ($isAdmin): ?><th><input type="checkbox" id="select-all" onchange="toggleSelectAll(this)"></th><?php endif; ?>
+                <th>ID</th>
+                <th>Name</th>
+                <th>WhatsApp Number</th>
+                <th>Email</th>
+                <th>Invoice/Bill No.</th>
+                <th>City/Location</th>
+                <th>Batch</th>
+                <th>Winner Status</th>
+                <th>Submission Date</th>
+                <?php if ($isAdmin): ?><th>Actions</th><?php endif; ?>
+            </tr>
+        </thead>
+        <tbody>
+            <?php if (empty($entries)): ?>
+                <tr><td colspan="<?= $isAdmin ? 10 : 8 ?>" style="text-align:center; color:#777;">No entries found.</td></tr>
+            <?php else: ?>
+                <?php foreach ($entries as $e): ?>
+                    <tr data-id="<?= (int) $e['id'] ?>">
+                        <?php if ($isAdmin): ?>
+                            <td><input type="checkbox" class="row-check" value="<?= (int) $e['id'] ?>" onchange="updateBulkBar()"></td>
+                        <?php endif; ?>
+                        <td>#<?= (int) $e['id'] ?></td>
+                        <td><strong><?= htmlspecialchars($e['name']) ?></strong></td>
+                        <td><?= htmlspecialchars($e['phone']) ?></td>
+                        <td><?= $e['email'] ? htmlspecialchars($e['email']) : '<span class="muted">—</span>' ?></td>
+                        <td><?= $e['invoice_number'] ? htmlspecialchars($e['invoice_number']) : '<span class="muted">—</span>' ?></td>
+                        <td><?= htmlspecialchars($e['town']) ?>, <?= htmlspecialchars($e['district']) ?></td>
+                        <td><?= htmlspecialchars($e['batch_name'] ?? '—') ?></td>
+                        <td><?= $e['is_winner'] ? '<span class="badge badge-winner">Winner</span>' : '<span class="muted">—</span>' ?></td>
+                        <td><?= date('M d, Y H:i', strtotime($e['created_at'])) ?></td>
+                        <?php if ($isAdmin): ?>
+                            <td class="row-actions">
+                                <button onclick='openEditModal(<?= json_encode([
+                                    "id" => (int) $e["id"],
+                                    "name" => $e["name"],
+                                    "phone" => $e["phone"],
+                                    "email" => $e["email"],
+                                    "invoice_number" => $e["invoice_number"],
+                                    "district" => $e["district"],
+                                    "town" => $e["town"],
+                                    "dealer" => $e["dealer"],
+                                ]) ?>)'>Edit</button>
+                                <button class="del-btn" onclick="openDeleteModal([<?= (int) $e['id'] ?>])">Delete</button>
+                            </td>
+                        <?php endif; ?>
+                    </tr>
+                <?php endforeach; ?>
+            <?php endif; ?>
+        </tbody>
+    </table>
+    </div>
 </div>
+
+<?php if ($isAdmin): ?>
+<div id="bulk-bar">
+    <span id="bulk-count">0 items selected</span>
+    <button class="btn btn-danger" onclick="openDeleteModal(getSelectedIds())">Delete Selected</button>
+</div>
+
+<!-- Edit Modal -->
+<div class="modal-overlay" id="editModal">
+    <div class="modal-box">
+        <h2>Edit Entry</h2>
+        <div class="modal-error" id="edit-error"></div>
+        <form id="editForm">
+            <div class="form-group">
+                <label>Name</label>
+                <input type="text" id="edit-name" required>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>WhatsApp Number</label>
+                    <input type="text" id="edit-phone" required>
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="edit-email">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Invoice/Bill Number</label>
+                    <input type="text" id="edit-invoice">
+                </div>
+                <div class="form-group">
+                    <label>District</label>
+                    <input type="text" id="edit-district" required>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>City / Town</label>
+                    <input type="text" id="edit-town" required>
+                </div>
+                <div class="form-group">
+                    <label>Dealer</label>
+                    <input type="text" id="edit-dealer" required>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('editModal')">Cancel</button>
+                <button type="submit" class="btn">Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal-overlay" id="deleteModal">
+    <div class="modal-box">
+        <h2>Confirm Delete</h2>
+        <p class="confirm-text" id="delete-confirm-text">Are you sure you want to permanently delete these entries?</p>
+        <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" onclick="closeModal('deleteModal')">Cancel</button>
+            <button type="button" class="btn btn-danger" onclick="confirmDelete()">Delete Permanently</button>
+        </div>
+    </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+    let pendingDeleteIds = [];
+
+    function showToast(message) {
+        const toast = document.getElementById('toast');
+        toast.innerText = message;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 2500);
+    }
+
+    function closeModal(id) {
+        document.getElementById(id).classList.remove('open');
+    }
+
+    async function callApi(url, payload) {
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        return { ok: res.ok, data: await res.json() };
+    }
+
+    /* ---------- Selection / bulk bar ---------- */
+
+    function toggleSelectAll(checkbox) {
+        document.querySelectorAll('.row-check').forEach(cb => cb.checked = checkbox.checked);
+        updateBulkBar();
+    }
+
+    function getSelectedIds() {
+        return [...document.querySelectorAll('.row-check:checked')].map(cb => parseInt(cb.value, 10));
+    }
+
+    function updateBulkBar() {
+        const ids = getSelectedIds();
+        const bar = document.getElementById('bulk-bar');
+        document.getElementById('bulk-count').innerText = `${ids.length} item(s) selected`;
+        bar.classList.toggle('show', ids.length > 0);
+
+        const selectAll = document.getElementById('select-all');
+        const allChecks = document.querySelectorAll('.row-check');
+        selectAll.checked = allChecks.length > 0 && ids.length === allChecks.length;
+    }
+
+    /* ---------- Delete ---------- */
+
+    function openDeleteModal(ids) {
+        if (!ids || ids.length === 0) return;
+        pendingDeleteIds = ids;
+        document.getElementById('delete-confirm-text').innerText =
+            `Are you sure you want to permanently delete these ${ids.length} entr${ids.length === 1 ? 'y' : 'ies'}?`;
+        document.getElementById('deleteModal').classList.add('open');
+    }
+
+    async function confirmDelete() {
+        const { ok, data } = await callApi('/api/delete_entries.php', { entry_ids: pendingDeleteIds });
+        closeModal('deleteModal');
+
+        if (!ok) {
+            showToast(data.message || 'Failed to delete entries');
+            return;
+        }
+
+        showToast(data.message || 'Entries deleted');
+        setTimeout(() => window.location.reload(), 600);
+    }
+
+    /* ---------- Edit ---------- */
+
+    let editEntryId = null;
+
+    function openEditModal(entry) {
+        editEntryId = entry.id;
+        document.getElementById('edit-error').style.display = 'none';
+        document.getElementById('edit-name').value = entry.name || '';
+        document.getElementById('edit-phone').value = entry.phone || '';
+        document.getElementById('edit-email').value = entry.email || '';
+        document.getElementById('edit-invoice').value = entry.invoice_number || '';
+        document.getElementById('edit-district').value = entry.district || '';
+        document.getElementById('edit-town').value = entry.town || '';
+        document.getElementById('edit-dealer').value = entry.dealer || '';
+        document.getElementById('editModal').classList.add('open');
+    }
+
+    document.getElementById('editForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const errorBox = document.getElementById('edit-error');
+        errorBox.style.display = 'none';
+
+        const { ok, data } = await callApi('/api/update_entry.php', {
+            id: editEntryId,
+            name: document.getElementById('edit-name').value.trim(),
+            phone: document.getElementById('edit-phone').value.trim(),
+            email: document.getElementById('edit-email').value.trim(),
+            invoice_number: document.getElementById('edit-invoice').value.trim(),
+            district: document.getElementById('edit-district').value.trim(),
+            town: document.getElementById('edit-town').value.trim(),
+            dealer: document.getElementById('edit-dealer').value.trim()
+        });
+
+        if (!ok) {
+            errorBox.innerText = data.message || 'Failed to update entry';
+            errorBox.style.display = 'block';
+            return;
+        }
+
+        closeModal('editModal');
+        showToast('Entry updated');
+        setTimeout(() => window.location.reload(), 600);
+    });
+</script>
+<?php endif; ?>
 </body>
 </html>
