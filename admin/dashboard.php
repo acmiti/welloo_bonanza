@@ -49,6 +49,10 @@ check_access(['admin']);
             <h3>Weekly Draw</h3>
             <p>Run and manage the weekly prize draw.</p>
         </a>
+        <a class="card" href="batches.php">
+            <h3>Draw Batches</h3>
+            <p>Manage weekly entry windows and deadlines.</p>
+        </a>
     </div>
 </div>
 </body>
