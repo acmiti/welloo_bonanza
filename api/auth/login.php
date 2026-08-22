@@ -22,7 +22,16 @@ if ($identifier === '' || $password === '') {
     exit;
 }
 
-if (!login($identifier, $password)) {
+try {
+    $ok = login($identifier, $password);
+} catch (PDOException $e) {
+    http_response_code(500);
+    // DEBUG: surfaces the real PDO error string for diagnosis — remove once login is confirmed working.
+    echo json_encode(['status' => 'error', 'message' => 'Login query failed: ' . $e->getMessage()]);
+    exit;
+}
+
+if (!$ok) {
     http_response_code(401);
     echo json_encode(['status' => 'error', 'message' => 'Invalid credentials']);
     exit;

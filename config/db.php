@@ -13,11 +13,14 @@ try {
     ]);
 } catch (PDOException $e) {
     http_response_code(500);
+    // DEBUG: surfaces the real PDO error string during API calls for diagnosis.
+    // Remove this detail (or gate it behind an env check) once the connection is confirmed working.
+    $message = 'Database connection failed: ' . $e->getMessage();
     if (!empty($_SERVER['HTTP_ACCEPT']) && str_contains($_SERVER['HTTP_ACCEPT'], 'application/json')) {
         header('Content-Type: application/json');
-        echo json_encode(['status' => 'error', 'message' => 'Database connection failed']);
+        echo json_encode(['status' => 'error', 'message' => $message]);
     } else {
-        echo 'Database connection failed';
+        echo htmlspecialchars($message);
     }
     exit;
 }

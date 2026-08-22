@@ -14,6 +14,9 @@ function login(string $identifier, string $password): bool
 {
     global $pdo;
 
+    // Query errors (e.g. a missing `users` table) propagate as PDOException —
+    // callers should catch this so it becomes a clean JSON error instead of
+    // an uncaught fatal that breaks the response body.
     $stmt = $pdo->prepare(
         "SELECT id, username, password_hash, role, status
          FROM users
