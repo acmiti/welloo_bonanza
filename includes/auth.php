@@ -20,10 +20,10 @@ function login(string $identifier, string $password): bool
     $stmt = $pdo->prepare(
         "SELECT id, username, password_hash, role, status
          FROM users
-         WHERE (username = :identifier OR email = :identifier)
+         WHERE (username = :username OR email = :email)
          LIMIT 1"
     );
-    $stmt->execute([':identifier' => $identifier]);
+    $stmt->execute([':username' => $identifier, ':email' => $identifier]);
     $user = $stmt->fetch();
 
     if (!$user || $user['status'] !== 'active' || !password_verify($password, $user['password_hash'])) {

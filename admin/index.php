@@ -16,8 +16,8 @@ $topDistricts = $districtStmt->fetchAll();
 // Fetch Registrations List
 $search = trim($_GET['q'] ?? '');
 if (!empty($search)) {
-    $stmt = $pdo->prepare("SELECT * FROM registrations WHERE full_name LIKE :q OR phone_number LIKE :q OR district LIKE :q ORDER BY id DESC LIMIT 100");
-    $stmt->execute([':q' => "%$search%"]);
+    $stmt = $pdo->prepare("SELECT * FROM registrations WHERE full_name LIKE :q1 OR phone_number LIKE :q2 OR district LIKE :q3 ORDER BY id DESC LIMIT 100");
+    $stmt->execute([':q1' => "%$search%", ':q2' => "%$search%", ':q3' => "%$search%"]);
 } else {
     $stmt = $pdo->query("SELECT * FROM registrations ORDER BY id DESC LIMIT 100");
 }
