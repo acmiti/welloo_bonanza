@@ -42,29 +42,47 @@ $batches = $stmt->fetchAll();
         .badge-active { background: rgba(37, 211, 102, 0.15); color: #25D366; }
         .badge-locked { background: rgba(255, 153, 0, 0.15); color: #FF9900; }
         .badge-completed { background: rgba(255, 102, 0, 0.15); color: #FF6600; }
+        .badge-removed { background: rgba(37, 211, 102, 0.15); color: #25D366; }
+        .badge-kept { background: rgba(77, 166, 255, 0.15); color: #4DA6FF; }
 
         .selection-bar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-top: 16px; background: #1A1A1A; border: 1px solid #333; border-radius: 10px; padding: 14px 18px; }
         #selection-summary { color: #DDD; font-size: 13px; font-weight: 600; }
         .btn { background: #FF6600; color: #000; border: none; padding: 10px 18px; font-weight: bold; border-radius: 6px; font-size: 14px; cursor: pointer; }
         .btn:disabled { opacity: 0.4; cursor: not-allowed; }
-        .btn-wheel { background: linear-gradient(180deg, #FF6600 0%, #D64F00 100%); font-size: 16px; padding: 16px 26px; text-transform: uppercase; }
+        .btn-secondary { background: #333; color: #FFF; }
+        .btn-wheel { background: linear-gradient(180deg, #FF6600 0%, #D64F00 100%); font-size: 17px; padding: 16px 30px; text-transform: uppercase; box-shadow: 0 4px 20px rgba(255,102,0,0.4); }
 
-        #pool-section, #winners-section { display: none; }
-        .pool-box { background: #1A1A1A; border: 1px solid #333; border-radius: 10px; padding: 18px; margin-top: 14px; }
-        #pool-count-label { color: #DDD; font-size: 13px; font-weight: 700; margin-bottom: 10px; }
-        .pool-list { max-height: 220px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; margin-bottom: 18px; }
-        .pool-item { background: #141414; border: 1px solid #2A2A2A; border-radius: 6px; padding: 8px 12px; font-size: 12.5px; color: #DDD; display: flex; justify-content: space-between; gap: 10px; }
-        .pool-empty { color: #777; font-size: 12.5px; text-align: center; padding: 12px; }
-        .pool-batch { color: #FF9900; font-size: 10.5px; font-weight: 700; }
+        #pool-section { display: none; }
+        .pool-box { background: #1A1A1A; border: 1px solid #333; border-radius: 10px; padding: 22px; margin-top: 14px; }
+        #pool-count-label { color: #DDD; font-size: 13px; font-weight: 700; margin-bottom: 14px; text-align: center; }
 
-        .wheel-reveal { display: none; margin: 20px auto; max-width: 360px; text-align: center; background: #141414; border: 2px solid #333; border-radius: 12px; padding: 26px; font-size: 20px; font-weight: 900; color: #FFF; }
-        .wheel-reveal.spinning { border-color: #FF6600; animation: pulse 0.3s ease-in-out infinite alternate; }
-        .wheel-reveal.winner { border-color: #25D366; font-size: 18px; color: #25D366; }
-        @keyframes pulse { from { box-shadow: 0 0 6px rgba(255,102,0,0.3); } to { box-shadow: 0 0 20px rgba(255,102,0,0.7); } }
+        .wheel-stage { position: relative; width: 340px; height: 340px; margin: 0 auto 20px; }
+        #wheel-canvas { display: block; width: 100%; height: 100%; border-radius: 50%; box-shadow: 0 0 0 6px #1A1A1A, 0 0 0 8px #FF6600, 0 10px 40px rgba(0,0,0,0.6); }
 
-        .spin-actions { text-align: center; margin-top: 8px; }
+        .spin-actions { text-align: center; margin-top: 4px; }
 
-        .winner-row { background: #141414; border: 1px solid #2A2A2A; border-radius: 6px; padding: 10px 14px; font-size: 12.5px; color: #DDD; margin-bottom: 8px; }
+        #winners-section { display: none; }
+        .winner-row { background: #141414; border: 1px solid #2A2A2A; border-radius: 6px; padding: 10px 14px; font-size: 12.5px; color: #DDD; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+        /* Post-winner choice modal */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 400; padding: 20px; }
+        .modal-overlay.open { display: flex; }
+        .winner-modal-box { background: #1A1A1A; border: 2px solid #FF6600; border-radius: 14px; max-width: 420px; width: 100%; padding: 28px; text-align: center; box-shadow: 0 0 40px rgba(255,102,0,0.35); }
+        .winner-modal-box .emoji { font-size: 40px; margin-bottom: 6px; }
+        .winner-modal-box h2 { color: #FF9900; font-size: 20px; margin-bottom: 4px; }
+        .winner-modal-box .winner-meta { color: #AAA; font-size: 13px; margin-bottom: 22px; }
+        .winner-choice-actions { display: flex; flex-direction: column; gap: 10px; }
+        .winner-choice-actions button { padding: 14px; border-radius: 8px; font-size: 13.5px; font-weight: 700; cursor: pointer; border: none; }
+        .btn-remove { background: linear-gradient(180deg, #25D366 0%, #199C4E 100%); color: #06210F; }
+        .btn-keep { background: #262626; color: #DDD; border: 1px solid #444 !important; }
+        .btn-keep:hover { border-color: #4DA6FF !important; color: #4DA6FF; }
+
+        /* Confetti */
+        #confetti-layer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; overflow: hidden; z-index: 500; }
+        .confetti-piece { position: absolute; top: -20px; width: 8px; height: 14px; opacity: 0.95; animation: confetti-fall linear forwards; }
+        @keyframes confetti-fall {
+            to { transform: translateY(110vh) rotate(720deg); opacity: 0.2; }
+        }
 
         #toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(80px); background: #1A1A1A; border: 1px solid #FF6600; border-radius: 8px; padding: 10px 18px; font-size: 13px; opacity: 0; transition: 0.3s ease; z-index: 300; }
         #toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
@@ -115,23 +133,38 @@ $batches = $stmt->fetchAll();
     <?php endif; ?>
 
     <div id="pool-section">
-        <h2 class="section-title">2. Draw Pool</h2>
+        <h2 class="section-title">2. Spin the Wheel</h2>
         <div class="pool-box">
             <div id="pool-count-label">0 eligible entries loaded</div>
-            <div class="pool-list" id="pool-list"></div>
-            <div class="spin-actions">
-                <button class="btn btn-wheel" id="spin-btn" onclick="spinWheel()" disabled>🎡 Spin the Wheel</button>
+            <div class="wheel-stage">
+                <canvas id="wheel-canvas" width="340" height="340"></canvas>
             </div>
-            <div class="wheel-reveal" id="wheel-reveal"></div>
+            <div class="spin-actions">
+                <button class="btn btn-wheel" id="spin-btn" onclick="spinWheel()" disabled>🎡 SPIN THE WHEEL</button>
+            </div>
         </div>
     </div>
 
     <div id="winners-section">
-        <h2 class="section-title">Winners This Session</h2>
+        <h2 class="section-title">Session Winners</h2>
         <div id="winners-log"></div>
     </div>
 </div>
 
+<!-- Post-winner choice modal -->
+<div class="modal-overlay" id="winnerModal">
+    <div class="winner-modal-box">
+        <div class="emoji">🎉</div>
+        <h2 id="winner-modal-name">Winner Name</h2>
+        <div class="winner-meta" id="winner-modal-meta">Phone · District · Batch</div>
+        <div class="winner-choice-actions">
+            <button class="btn-remove" id="btn-remove-winner">Remove from List &amp; Record Winner</button>
+            <button class="btn-keep" id="btn-keep-winner">Allow Re-entry &amp; Re-spin</button>
+        </div>
+    </div>
+</div>
+
+<div id="confetti-layer"></div>
 <div id="toast"></div>
 
 <script>
@@ -148,6 +181,8 @@ $batches = $stmt->fetchAll();
         return div.innerHTML;
     }
 
+    /* ---------- Batch selection ---------- */
+
     function updateSelectionSummary() {
         const checked = [...document.querySelectorAll('.batch-check:checked')];
         const totalEligible = checked.reduce((sum, c) => sum + parseInt(c.dataset.eligible, 10), 0);
@@ -161,6 +196,7 @@ $batches = $stmt->fetchAll();
     updateSelectionSummary();
 
     let currentPool = [];
+    const spinCounts = {}; // entry_id -> number of times drawn this session
 
     async function loadPool() {
         const batchIds = [...document.querySelectorAll('.batch-check:checked')].map(c => c.dataset.id);
@@ -179,18 +215,117 @@ $batches = $stmt->fetchAll();
         }
 
         currentPool = data.pool;
-        renderPool();
+        wheelRotation = 0;
+        document.getElementById('pool-count-label').innerText = `${currentPool.length} eligible entries loaded`;
+        document.getElementById('spin-btn').disabled = currentPool.length === 0;
         document.getElementById('pool-section').style.display = 'block';
-        document.getElementById('wheel-reveal').style.display = 'none';
+        drawWheel(currentPool, wheelRotation);
     }
 
-    function renderPool() {
-        document.getElementById('pool-count-label').innerText = `${currentPool.length} eligible entries loaded`;
-        const list = document.getElementById('pool-list');
-        list.innerHTML = currentPool.length
-            ? currentPool.map(e => `<div class="pool-item"><span>${escapeHtml(e.name)} — ${escapeHtml(e.district)}</span><span class="pool-batch">${escapeHtml(e.batch_name)}</span></div>`).join('')
-            : '<div class="pool-empty">No eligible entries remaining in this pool.</div>';
-        document.getElementById('spin-btn').disabled = currentPool.length === 0;
+    /* ---------- Canvas wheel ---------- */
+
+    const WHEEL_COLORS = ['#B8860B', '#D64F00', '#2A2A2A', '#FF6600'];
+    let wheelRotation = 0;
+
+    function sliceAngleFor(poolSize) { return (Math.PI * 2) / poolSize; }
+    function sliceCenterAngle(index, poolSize) {
+        const sa = sliceAngleFor(poolSize);
+        return index * sa + sa / 2;
+    }
+    function normalizeAngle(a) {
+        const twoPi = Math.PI * 2;
+        return ((a % twoPi) + twoPi) % twoPi;
+    }
+
+    function drawWheel(pool, rotation) {
+        const canvas = document.getElementById('wheel-canvas');
+        const ctx = canvas.getContext('2d');
+        const size = canvas.width;
+        const cx = size / 2, cy = size / 2, radius = size / 2 - 6;
+
+        ctx.clearRect(0, 0, size, size);
+
+        if (!pool || pool.length === 0) {
+            ctx.beginPath();
+            ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+            ctx.fillStyle = '#1A1A1A';
+            ctx.fill();
+            ctx.fillStyle = '#777';
+            ctx.font = '14px Segoe UI';
+            ctx.textAlign = 'center';
+            ctx.fillText('No entries loaded', cx, cy + 5);
+            return;
+        }
+
+        const sliceAngle = sliceAngleFor(pool.length);
+
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(rotation);
+
+        pool.forEach((entry, i) => {
+            const start = i * sliceAngle;
+            const end = start + sliceAngle;
+
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.arc(0, 0, radius, start, end);
+            ctx.closePath();
+            ctx.fillStyle = WHEEL_COLORS[i % WHEEL_COLORS.length];
+            ctx.fill();
+            ctx.strokeStyle = '#0F0F0F';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            if (pool.length <= 40) {
+                ctx.save();
+                ctx.rotate(start + sliceAngle / 2);
+                ctx.textAlign = 'right';
+                ctx.fillStyle = '#FFFFFF';
+                ctx.font = 'bold 11px Segoe UI';
+                const label = entry.name.length > 14 ? entry.name.slice(0, 13) + '…' : entry.name;
+                ctx.fillText(label, radius - 10, 4);
+                ctx.restore();
+            }
+        });
+
+        ctx.restore();
+
+        // Hub
+        ctx.beginPath();
+        ctx.arc(cx, cy, 20, 0, Math.PI * 2);
+        ctx.fillStyle = '#0F0F0F';
+        ctx.fill();
+        ctx.strokeStyle = '#FF6600';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+
+        // Fixed pointer at top, pointing down
+        ctx.beginPath();
+        ctx.moveTo(cx - 14, 2);
+        ctx.lineTo(cx + 14, 2);
+        ctx.lineTo(cx, 30);
+        ctx.closePath();
+        ctx.fillStyle = '#FF9900';
+        ctx.fill();
+        ctx.strokeStyle = '#0F0F0F';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+    }
+
+    /* ---------- Spin animation (5s, 3-phase easing) ---------- */
+
+    function easeInQuad(x) { return x * x; }
+    function easeOutCubic(x) { return 1 - Math.pow(1 - x, 3); }
+    function easeOutQuint(x) { return 1 - Math.pow(1 - x, 5); }
+
+    function spinProgress(t) {
+        if (t <= 0.4) {
+            return 0.55 * easeInQuad(t / 0.4);
+        } else if (t <= 0.8) {
+            return 0.55 + 0.37 * easeOutCubic((t - 0.4) / 0.4);
+        }
+        return 0.92 + 0.08 * easeOutQuint((t - 0.8) / 0.2);
     }
 
     let spinning = false;
@@ -200,63 +335,122 @@ $batches = $stmt->fetchAll();
         spinning = true;
         document.getElementById('spin-btn').disabled = true;
 
-        const reveal = document.getElementById('wheel-reveal');
-        reveal.style.display = 'block';
-        reveal.className = 'wheel-reveal spinning';
+        const winningIndex = Math.floor(Math.random() * currentPool.length);
+        const winner = currentPool[winningIndex];
 
-        let ticks = 0;
-        const maxTicks = 20;
-        const interval = setInterval(() => {
-            const r = currentPool[Math.floor(Math.random() * currentPool.length)];
-            reveal.innerText = r.name;
-            ticks++;
-            if (ticks >= maxTicks) {
-                clearInterval(interval);
-                finishSpin();
+        const sliceAngle = sliceAngleFor(currentPool.length);
+        const center = winningIndex * sliceAngle + sliceAngle / 2;
+        const desiredMod = normalizeAngle(-Math.PI / 2 - center);
+        const currentMod = normalizeAngle(wheelRotation);
+        let delta = desiredMod - currentMod;
+        if (delta < 0) delta += Math.PI * 2;
+        const extraSpins = 8 + Math.floor(Math.random() * 3); // 8-10 full turns
+        const targetRotation = wheelRotation + delta + extraSpins * Math.PI * 2;
+
+        const startRotation = wheelRotation;
+        const duration = 5000;
+        const t0 = performance.now();
+
+        function frame(now) {
+            const t = Math.min((now - t0) / duration, 1);
+            const p = spinProgress(t);
+            wheelRotation = startRotation + (targetRotation - startRotation) * p;
+            drawWheel(currentPool, wheelRotation);
+
+            if (t < 1) {
+                requestAnimationFrame(frame);
+            } else {
+                wheelRotation = targetRotation;
+                drawWheel(currentPool, wheelRotation);
+                onSpinComplete(winner);
             }
-        }, 90);
+        }
+        requestAnimationFrame(frame);
     }
 
-    async function finishSpin() {
-        const reveal = document.getElementById('wheel-reveal');
-        const candidate = currentPool[Math.floor(Math.random() * currentPool.length)];
+    /* ---------- Confetti ---------- */
+
+    function fireConfetti() {
+        const layer = document.getElementById('confetti-layer');
+        const colors = ['#FF6600', '#FF9900', '#25D366', '#4DA6FF', '#FFFFFF'];
+        for (let i = 0; i < 60; i++) {
+            const piece = document.createElement('div');
+            piece.className = 'confetti-piece';
+            piece.style.left = Math.random() * 100 + 'vw';
+            piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+            piece.style.animationDuration = (2 + Math.random() * 1.5) + 's';
+            piece.style.transform = `rotate(${Math.random() * 360}deg)`;
+            layer.appendChild(piece);
+            setTimeout(() => piece.remove(), 4000);
+        }
+    }
+
+    /* ---------- Post-spin: choice modal ---------- */
+
+    let pendingWinner = null;
+
+    function onSpinComplete(winner) {
+        spinning = false;
+        pendingWinner = winner;
+        spinCounts[winner.id] = (spinCounts[winner.id] || 0) + 1;
+
+        fireConfetti();
+
+        document.getElementById('winner-modal-name').innerText = winner.name;
+        document.getElementById('winner-modal-meta').innerText = `${winner.phone} · ${winner.district} · ${winner.batch_name}`;
+        document.getElementById('winnerModal').classList.add('open');
+    }
+
+    async function resolveWinner(action) {
+        if (!pendingWinner) return;
+        const winner = pendingWinner;
 
         const res = await fetch('/api/record_winner.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-            body: JSON.stringify({ entry_id: candidate.id })
+            body: JSON.stringify({ entry_id: winner.id, action })
         });
         const data = await res.json();
 
         if (data.status !== 'success') {
-            // Most likely raced with another draw session on the same entry — drop it and let the admin retry.
-            currentPool = currentPool.filter(e => e.id !== candidate.id);
-            renderPool();
-            reveal.className = 'wheel-reveal';
-            reveal.style.display = 'none';
-            spinning = false;
+            showToast(data.message || 'Failed to record decision — try again');
+            document.getElementById('winnerModal').classList.remove('open');
             document.getElementById('spin-btn').disabled = currentPool.length === 0;
-            showToast(data.message || 'That entry was just claimed — spin again');
             return;
         }
 
-        const winner = data.winner;
-        reveal.className = 'wheel-reveal winner';
-        reveal.innerHTML = `🎉 <strong>${escapeHtml(winner.name)}</strong><br><span style="font-size:12px;color:#AAA;">${escapeHtml(winner.district)} &middot; ${escapeHtml(winner.batch_name)}</span>`;
+        if (action === 'remove') {
+            currentPool = currentPool.filter(e => e.id !== winner.id);
+            document.getElementById('pool-count-label').innerText = `${currentPool.length} eligible entries loaded`;
+            drawWheel(currentPool, wheelRotation);
+        }
 
-        currentPool = currentPool.filter(e => e.id !== winner.id);
-        renderPool();
+        logSessionWinner(winner, action);
 
+        document.getElementById('winnerModal').classList.remove('open');
+        pendingWinner = null;
+        document.getElementById('spin-btn').disabled = currentPool.length === 0;
+    }
+
+    document.getElementById('btn-remove-winner').addEventListener('click', () => resolveWinner('remove'));
+    document.getElementById('btn-keep-winner').addEventListener('click', () => resolveWinner('keep_eligible'));
+
+    function logSessionWinner(winner, action) {
         const log = document.getElementById('winners-log');
         const row = document.createElement('div');
         row.className = 'winner-row';
-        row.innerHTML = `<strong>${escapeHtml(winner.name)}</strong> — ${escapeHtml(winner.phone)} — ${escapeHtml(winner.district)} <span class="pool-batch">${escapeHtml(winner.batch_name)}</span>`;
+        const actionBadge = action === 'remove'
+            ? '<span class="badge badge-removed">Recorded</span>'
+            : '<span class="badge badge-kept">Kept Eligible</span>';
+        row.innerHTML = `
+            <span><strong>${escapeHtml(winner.name)}</strong> — ${escapeHtml(winner.phone)} — ${escapeHtml(winner.district)} <span style="color:#FF9900;font-size:10.5px;font-weight:700;">${escapeHtml(winner.batch_name)}</span></span>
+            <span>Spin #${spinCounts[winner.id]} ${actionBadge}</span>
+        `;
         log.prepend(row);
         document.getElementById('winners-section').style.display = 'block';
-
-        spinning = false;
-        document.getElementById('spin-btn').disabled = currentPool.length === 0;
     }
+
+    drawWheel([], 0);
 </script>
 </body>
 </html>
