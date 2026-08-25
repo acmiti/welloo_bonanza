@@ -149,9 +149,8 @@ $exportUrl = '/api/export_entries.php' . ($exportParams ? '?' . http_build_query
         .stat-card { background: #1A1A1A; border: 1px solid #333; border-radius: 10px; padding: 16px 20px; flex: 1; display: flex; flex-direction: column; justify-content: center; }
         .stat-card .stat-label { color: #888; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
         .stat-card .stat-value { color: #FF9900; font-size: 26px; font-weight: 700; }
-        .chart-card { background: #1A1A1A; border: 1px solid #333; border-radius: 10px; padding: 16px 20px; flex: 1 1 320px; }
+        .chart-card { background: #1A1A1A; border: 1px solid #333; border-radius: 10px; padding: 16px 20px; flex: 1 1 320px; box-sizing: border-box; overflow: hidden; }
         .chart-card .stat-label { color: #888; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; }
-        .chart-card .chart-wrap { position: relative; height: 100%; min-height: 220px; }
 
         .toolbar-section { width: 100%; border-top: 1px solid #2A2A2A; margin-top: 6px; padding-top: 14px; display: flex; flex-direction: column; gap: 10px; }
         .toolbar-section-label { color: #888; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700; }
@@ -225,7 +224,7 @@ $exportUrl = '/api/export_entries.php' . ($exportParams ? '?' . http_build_query
         </div>
         <div class="chart-card">
             <div class="stat-label">New Entries Trend</div>
-            <div class="chart-wrap"><canvas id="trend-chart"></canvas></div>
+            <div class="relative w-full" style="position: relative; width: 100%; height: 260px; max-height: 260px;"><canvas id="trend-chart"></canvas></div>
         </div>
     </div>
 
