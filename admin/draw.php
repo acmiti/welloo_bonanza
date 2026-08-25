@@ -8,7 +8,7 @@ $isAdmin = ($_SESSION['role'] ?? '') === 'admin';
 $stmt = $pdo->query(
     "SELECT b.id, b.batch_name, b.status, b.entry_deadline, b.draw_datetime,
             COUNT(e.id) AS total_entries,
-            COALESCE(SUM(CASE WHEN e.is_winner = 0 THEN 1 ELSE 0 END), 0) AS eligible_entries
+            COALESCE(SUM(CASE WHEN e.is_winner = 0 THEN e.multiplier ELSE 0 END), 0) AS eligible_entries
      FROM draw_batches b
      LEFT JOIN bonanza_entries e ON e.batch_id = b.id
      WHERE b.status IN ('locked', 'completed')
@@ -150,7 +150,7 @@ $batches = $stmt->fetchAll();
         <?php if ($isAdmin): ?>
         <div class="criteria-box">
             <div class="criteria-title">🎯 Target Criteria (admin only)</div>
-            <div class="criteria-hint">Optional pre-selection — narrows the eligible pool before a spin. Leave blank for a fully random draw. Falls back to the full pool automatically if nothing matches.</div>
+            <div class="criteria-hint">Optional pre-selection — narrows the eligible pool before a spin. Leave blank for a fully random draw. Falls back to the full pool automatically if nothing matches. Entries with a bulk multiplier get proportionally more slices/odds in the pool.</div>
             <div class="criteria-fields">
                 <div>
                     <label for="target-district">Target District</label>

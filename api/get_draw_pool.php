@@ -36,7 +36,7 @@ foreach ($batchIds as $i => $id) {
     $params[$key] = $id;
 }
 
-$sql = "SELECT e.id, e.name, e.phone, e.district, e.town, e.dealer, e.language, e.batch_id, b.batch_name
+$sql = "SELECT e.id, e.name, e.phone, e.district, e.town, e.dealer, e.language, e.batch_id, e.multiplier, b.batch_name
         FROM bonanza_entries e
         JOIN draw_batches b ON b.id = e.batch_id
         WHERE e.batch_id IN (" . implode(', ', $placeholders) . ")
@@ -47,8 +47,10 @@ $stmt = $pdo->prepare($sql);
 $stmt->execute($params);
 $entries = $stmt->fetchAll();
 
-$pool = array_map(static function (array $e): array {
-    return [
+// An entry with multiplier = N gets N slices/tokens in the pool, multiplying its odds.
+$pool = [];
+foreach ($entries as $e) {
+    $token = [
         'id'         => (int) $e['id'],
         'label'      => $e['name'],
         'name'       => $e['name'],
@@ -58,7 +60,12 @@ $pool = array_map(static function (array $e): array {
         'dealer'     => $e['dealer'],
         'batch_id'   => (int) $e['batch_id'],
         'batch_name' => $e['batch_name'],
+        'multiplier' => (int) $e['multiplier'],
     ];
-}, $entries);
+    $copies = max(1, (int) $e['multiplier']);
+    for ($i = 0; $i < $copies; $i++) {
+        $pool[] = $token;
+    }
+}
 
 echo json_encode(['status' => 'success', 'count' => count($pool), 'pool' => $pool]);

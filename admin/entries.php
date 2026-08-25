@@ -206,6 +206,7 @@ $exportUrl = '/api/export_entries.php' . ($exportParams ? '?' . http_build_query
             <a class="btn" id="export-btn" href="<?= htmlspecialchars($exportUrl) ?>">Export Filtered</a>
             <?php if ($isAdmin): ?>
                 <a class="btn btn-secondary" id="export-all-btn" href="/api/export_entries.php">Export All Entries</a>
+                <button type="button" class="btn btn-secondary" id="open-multiplier-btn" onclick="openMultiplierModal()">🎯 Bulk Multipliers</button>
             <?php endif; ?>
         </div>
     </div>
@@ -421,6 +422,29 @@ $exportUrl = '/api/export_entries.php' . ($exportParams ? '?' . http_build_query
     </div>
 </div>
 
+<!-- Bulk Multiplier Modal -->
+<div class="modal-overlay" id="multiplierModal">
+    <div class="modal-box" style="max-width: 520px;">
+        <h2>Bulk Entry Multipliers</h2>
+        <p class="confirm-text" style="margin-bottom:16px;">Boost winning chances for specific entries — an entry with an Nx multiplier gets N slices in the draw pool.</p>
+        <div class="modal-error" id="multiplier-error"></div>
+        <form id="multiplierForm">
+            <div class="form-group">
+                <label>Multiplier (1–100)</label>
+                <input type="number" id="multiplier-value" min="1" max="100" value="1" required>
+            </div>
+            <div class="form-group">
+                <label>Mobile Numbers (one per line)</label>
+                <textarea id="multiplier-phones" rows="8" required placeholder="0771234567&#10;0779876543&#10;..." style="padding: 10px 12px; background: #141414; border: 1px solid #333; border-radius: 6px; color: #FFF; font-size: 13px; font-family: 'Segoe UI', Roboto, sans-serif; resize: vertical;"></textarea>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('multiplierModal')">Cancel</button>
+                <button type="submit" class="btn">Apply Multiplier</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <div id="toast"></div>
 
 <script>
@@ -533,6 +557,35 @@ $exportUrl = '/api/export_entries.php' . ($exportParams ? '?' . http_build_query
         closeModal('editModal');
         showToast('Entry updated');
         setTimeout(() => window.location.reload(), 600);
+    });
+
+    /* ---------- Bulk Multipliers ---------- */
+
+    function openMultiplierModal() {
+        document.getElementById('multiplier-error').style.display = 'none';
+        document.getElementById('multiplier-value').value = 1;
+        document.getElementById('multiplier-phones').value = '';
+        document.getElementById('multiplierModal').classList.add('open');
+    }
+
+    document.getElementById('multiplierForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const errorBox = document.getElementById('multiplier-error');
+        errorBox.style.display = 'none';
+
+        const { ok, data } = await callApi('/api/update_multipliers.php', {
+            multiplier: parseInt(document.getElementById('multiplier-value').value, 10),
+            phones: document.getElementById('multiplier-phones').value
+        });
+
+        if (!ok) {
+            errorBox.innerText = data.message || 'Failed to update multipliers';
+            errorBox.style.display = 'block';
+            return;
+        }
+
+        closeModal('multiplierModal');
+        showToast(data.message || 'Multipliers updated');
     });
 </script>
 <?php endif; ?>

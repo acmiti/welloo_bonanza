@@ -3,6 +3,8 @@
 // If criteria (district/city/dealer) are supplied, the pool is first filtered to entries
 // matching those criteria and the winner is drawn from that subset. If nothing matches the
 // criteria, selection falls back to the full eligible pool so a spin never fails outright.
+// Each entry contributes `multiplier` tokens to the pool, so array_rand() picking uniformly
+// over tokens gives higher-multiplier entries a proportionally higher chance of winning.
 header('Content-Type: application/json');
 
 require_once __DIR__ . '/../includes/auth.php';
@@ -38,7 +40,7 @@ foreach ($batchIds as $i => $id) {
     $params[$key] = $id;
 }
 
-$sql = "SELECT e.id, e.name, e.phone, e.district, e.town, e.dealer, e.language, e.batch_id, b.batch_name
+$sql = "SELECT e.id, e.name, e.phone, e.district, e.town, e.dealer, e.language, e.batch_id, e.multiplier, b.batch_name
         FROM bonanza_entries e
         JOIN draw_batches b ON b.id = e.batch_id
         WHERE e.batch_id IN (" . implode(', ', $placeholders) . ")
@@ -47,12 +49,22 @@ $sql = "SELECT e.id, e.name, e.phone, e.district, e.town, e.dealer, e.language, 
 
 $stmt = $pdo->prepare($sql);
 $stmt->execute($params);
-$pool = $stmt->fetchAll();
+$rows = $stmt->fetchAll();
 
-if (empty($pool)) {
+if (empty($rows)) {
     http_response_code(404);
     echo json_encode(['status' => 'error', 'message' => 'No eligible entries remain in this pool']);
     exit;
+}
+
+// Expand each entry into `multiplier` tokens so a uniform random pick over the
+// pool weights higher-multiplier entries proportionally more likely to win.
+$pool = [];
+foreach ($rows as $row) {
+    $copies = max(1, (int) $row['multiplier']);
+    for ($i = 0; $i < $copies; $i++) {
+        $pool[] = $row;
+    }
 }
 
 $hasCriteria = $targetDistrict !== '' || $targetCity !== '' || $targetDealer !== '';
@@ -91,6 +103,7 @@ $winner = [
     'dealer'     => $winnerRow['dealer'],
     'batch_id'   => (int) $winnerRow['batch_id'],
     'batch_name' => $winnerRow['batch_name'],
+    'multiplier' => (int) $winnerRow['multiplier'],
 ];
 
 echo json_encode([
