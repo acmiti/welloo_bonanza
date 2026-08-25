@@ -4,6 +4,7 @@
 header('Content-Type: application/json');
 
 require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/MetaCapi.php';
 
 check_access(['admin']);
 
@@ -52,6 +53,17 @@ $sql = "UPDATE bonanza_entries SET multiplier = :multiplier WHERE phone IN (" . 
 $stmt = $pdo->prepare($sql);
 $stmt->execute($params);
 $updated = $stmt->rowCount();
+
+if ($updated > 0) {
+    foreach ($phones as $phone) {
+        MetaCapi::sendEvent('MultiplierGranted', [
+            'ph'          => $phone,
+            'external_id' => $phone,
+        ], [
+            'multiplier' => $multiplier,
+        ]);
+    }
+}
 
 echo json_encode([
     'status'  => 'success',

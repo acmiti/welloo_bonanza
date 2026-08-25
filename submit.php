@@ -11,6 +11,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 // Connect via central database configuration file
 require_once __DIR__ . '/api/db.php';
+require_once __DIR__ . '/includes/MetaCapi.php';
 
 $jsonInput = file_get_contents('php://input');
 $data = json_decode($jsonInput, true) ?: $_POST;
@@ -105,6 +106,11 @@ try {
     ]);
 
     $pdo->commit();
+
+    $capiUserData = ['ph' => $phone, 'external_id' => $phone];
+    $capiCustomData = ['content_name' => 'Always Dinum Bonanza Registration', 'district' => $district];
+    MetaCapi::sendEvent('Lead', $capiUserData, $capiCustomData);
+    MetaCapi::sendEvent('CompleteRegistration', $capiUserData, $capiCustomData);
 
     echo json_encode([
         'status'        => 'success',

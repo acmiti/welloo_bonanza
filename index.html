@@ -236,7 +236,25 @@
         fetchCurrentBatch();
         setInterval(fetchCurrentBatch, 60000);
         startSocialProofLoop();
+        trackPageView();
     });
+
+    function getCookie(name) {
+        const match = document.cookie.match(new RegExp('(?:^|; )' + name + '=([^;]*)'));
+        return match ? decodeURIComponent(match[1]) : null;
+    }
+
+    function trackPageView() {
+        fetch('api/track_pageview.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                fbp: getCookie('_fbp'),
+                fbc: getCookie('_fbc'),
+                url: window.location.href
+            })
+        }).catch(err => console.error('Failed to log PageView:', err));
+    }
 
     const translations = {
         si: {

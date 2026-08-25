@@ -3,6 +3,7 @@
 header('Content-Type: application/json');
 
 require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/MetaCapi.php';
 
 check_access(['admin']);
 
@@ -48,9 +49,10 @@ if (!in_array($language, ['EN', 'SI', 'TA'], true)) {
     exit;
 }
 
-$existsStmt = $pdo->prepare("SELECT id FROM bonanza_entries WHERE id = :id");
+$existsStmt = $pdo->prepare("SELECT id, multiplier FROM bonanza_entries WHERE id = :id");
 $existsStmt->execute([':id' => $id]);
-if (!$existsStmt->fetch()) {
+$existingEntry = $existsStmt->fetch();
+if (!$existingEntry) {
     http_response_code(404);
     echo json_encode(['status' => 'error', 'message' => 'Entry not found']);
     exit;
@@ -73,5 +75,14 @@ $stmt->execute([
     ':multiplier' => $multiplier,
     ':id'         => $id,
 ]);
+
+if ((int) $existingEntry['multiplier'] !== $multiplier) {
+    MetaCapi::sendEvent('MultiplierGranted', [
+        'ph'          => $phone,
+        'external_id' => $phone,
+    ], [
+        'multiplier' => $multiplier,
+    ]);
+}
 
 echo json_encode(['status' => 'success', 'message' => 'Entry updated']);
