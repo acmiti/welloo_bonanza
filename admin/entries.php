@@ -16,7 +16,7 @@ try {
     $batchList = $batchListStmt->fetchAll();
 
     $sql = "SELECT e.id, e.name, e.phone, e.email, e.invoice_number, e.district, e.town, e.dealer,
-                   e.language, e.is_winner, e.batch_id, e.created_at, b.batch_name
+                   e.language, e.is_winner, e.winning_service, e.batch_id, e.created_at, b.batch_name
             FROM bonanza_entries e
             LEFT JOIN draw_batches b ON b.id = e.batch_id";
     $params = [];
@@ -31,9 +31,10 @@ try {
     $entries = $stmt->fetchAll();
 } catch (PDOException $e) {
     // Most likely cause: database/04_add_entry_contact_fields.sql hasn't been
-    // run yet, so email / invoice_number don't exist on bonanza_entries.
+    // run yet (email / invoice_number), or the winning_service column hasn't
+    // been added to bonanza_entries yet.
     $loadError = 'Could not load entries: ' . $e->getMessage()
-        . '. If this mentions an unknown column (email, invoice_number), run database/04_add_entry_contact_fields.sql against the database.';
+        . '. If this mentions an unknown column (email, invoice_number, winning_service), make sure that column exists on bonanza_entries.';
 }
 ?>
 <!DOCTYPE html>
@@ -81,8 +82,8 @@ try {
         .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         .form-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
         .form-group label { font-size: 12px; color: #DDD; font-weight: 600; }
-        .form-group input { padding: 10px 12px; background: #141414; border: 1px solid #333; border-radius: 6px; color: #FFF; font-size: 13.5px; outline: none; }
-        .form-group input:focus { border-color: #FF6600; }
+        .form-group input, .form-group select { padding: 10px 12px; background: #141414; border: 1px solid #333; border-radius: 6px; color: #FFF; font-size: 13.5px; outline: none; }
+        .form-group input:focus, .form-group select:focus { border-color: #FF6600; }
         .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; }
         .modal-error { display: none; background: rgba(255, 51, 51, 0.1); border: 1px solid #FF3333; color: #FF6B6B; font-size: 12px; font-weight: 600; padding: 8px 10px; border-radius: 6px; margin-bottom: 12px; }
         .modal-box p.confirm-text { font-size: 13.5px; color: #DDD; line-height: 1.5; margin-bottom: 6px; }
@@ -124,16 +125,20 @@ try {
                 <th>WhatsApp Number</th>
                 <th>Email</th>
                 <th>Invoice/Bill No.</th>
-                <th>City/Location</th>
-                <th>Batch</th>
+                <th>District</th>
+                <th>City/Town</th>
+                <th>Dealer</th>
+                <th>Language</th>
                 <th>Winner Status</th>
+                <th>Winning Service</th>
+                <th>Batch</th>
                 <th>Submission Date</th>
                 <?php if ($isAdmin): ?><th>Actions</th><?php endif; ?>
             </tr>
         </thead>
         <tbody>
             <?php if (empty($entries)): ?>
-                <tr><td colspan="<?= $isAdmin ? 10 : 8 ?>" style="text-align:center; color:#777;">No entries found.</td></tr>
+                <tr><td colspan="<?= $isAdmin ? 15 : 13 ?>" style="text-align:center; color:#777;">No entries found.</td></tr>
             <?php else: ?>
                 <?php foreach ($entries as $e): ?>
                     <tr data-id="<?= (int) $e['id'] ?>">
@@ -145,9 +150,13 @@ try {
                         <td><?= htmlspecialchars($e['phone']) ?></td>
                         <td><?= $e['email'] ? htmlspecialchars($e['email']) : '<span class="muted">—</span>' ?></td>
                         <td><?= $e['invoice_number'] ? htmlspecialchars($e['invoice_number']) : '<span class="muted">—</span>' ?></td>
-                        <td><?= htmlspecialchars($e['town']) ?>, <?= htmlspecialchars($e['district']) ?></td>
-                        <td><?= htmlspecialchars($e['batch_name'] ?? '—') ?></td>
+                        <td><?= htmlspecialchars($e['district']) ?></td>
+                        <td><?= htmlspecialchars($e['town']) ?></td>
+                        <td><?= htmlspecialchars($e['dealer']) ?></td>
+                        <td><span class="badge badge-lang"><?= htmlspecialchars($e['language']) ?></span></td>
                         <td><?= $e['is_winner'] ? '<span class="badge badge-winner">Winner</span>' : '<span class="muted">—</span>' ?></td>
+                        <td><?= $e['winning_service'] ? htmlspecialchars($e['winning_service']) : '<span class="muted">—</span>' ?></td>
+                        <td><?= htmlspecialchars($e['batch_name'] ?? '—') ?></td>
                         <td><?= date('M d, Y H:i', strtotime($e['created_at'])) ?></td>
                         <?php if ($isAdmin): ?>
                             <td class="row-actions">
@@ -160,6 +169,9 @@ try {
                                     "district" => $e["district"],
                                     "town" => $e["town"],
                                     "dealer" => $e["dealer"],
+                                    "language" => $e["language"],
+                                    "is_winner" => (int) $e["is_winner"],
+                                    "winning_service" => $e["winning_service"],
                                 ]) ?>)'>Edit</button>
                                 <button class="del-btn" onclick="openDeleteModal([<?= (int) $e['id'] ?>])">Delete</button>
                             </td>
@@ -215,9 +227,30 @@ try {
                     <input type="text" id="edit-town" required>
                 </div>
                 <div class="form-group">
-                    <label>Dealer</label>
+                    <label>Hardware Store / Dealer</label>
                     <input type="text" id="edit-dealer" required>
                 </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Preferred Language</label>
+                    <select id="edit-language">
+                        <option value="EN">English</option>
+                        <option value="SI">Sinhala</option>
+                        <option value="TA">Tamil</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Winner Status</label>
+                    <select id="edit-is-winner">
+                        <option value="0">Not Winner</option>
+                        <option value="1">Winner</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Winning Service</label>
+                <input type="text" id="edit-winning-service" placeholder="e.g. Cash Prize, Voucher">
             </div>
             <div class="modal-actions">
                 <button type="button" class="btn btn-secondary" onclick="closeModal('editModal')">Cancel</button>
@@ -323,6 +356,9 @@ try {
         document.getElementById('edit-district').value = entry.district || '';
         document.getElementById('edit-town').value = entry.town || '';
         document.getElementById('edit-dealer').value = entry.dealer || '';
+        document.getElementById('edit-language').value = entry.language || 'EN';
+        document.getElementById('edit-is-winner').value = entry.is_winner ? '1' : '0';
+        document.getElementById('edit-winning-service').value = entry.winning_service || '';
         document.getElementById('editModal').classList.add('open');
     }
 
@@ -339,7 +375,10 @@ try {
             invoice_number: document.getElementById('edit-invoice').value.trim(),
             district: document.getElementById('edit-district').value.trim(),
             town: document.getElementById('edit-town').value.trim(),
-            dealer: document.getElementById('edit-dealer').value.trim()
+            dealer: document.getElementById('edit-dealer').value.trim(),
+            language: document.getElementById('edit-language').value,
+            is_winner: document.getElementById('edit-is-winner').value,
+            winning_service: document.getElementById('edit-winning-service').value.trim()
         });
 
         if (!ok) {

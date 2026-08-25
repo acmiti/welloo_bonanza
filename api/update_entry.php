@@ -14,14 +14,17 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 $body = json_decode(file_get_contents('php://input'), true) ?: $_POST;
 
-$id       = (int) ($body['id'] ?? 0);
-$name     = trim($body['name'] ?? '');
-$phone    = trim($body['phone'] ?? '');
-$email    = trim($body['email'] ?? '');
-$invoice  = trim($body['invoice_number'] ?? '');
-$district = trim($body['district'] ?? '');
-$town     = trim($body['town'] ?? '');
-$dealer   = trim($body['dealer'] ?? '');
+$id             = (int) ($body['id'] ?? 0);
+$name           = trim($body['name'] ?? '');
+$phone          = trim($body['phone'] ?? '');
+$email          = trim($body['email'] ?? '');
+$invoice        = trim($body['invoice_number'] ?? '');
+$district       = trim($body['district'] ?? '');
+$town           = trim($body['town'] ?? '');
+$dealer         = trim($body['dealer'] ?? '');
+$language       = strtoupper(trim($body['language'] ?? ''));
+$isWinner       = (int) ($body['is_winner'] ?? 0) === 1 ? 1 : 0;
+$winningService = trim($body['winning_service'] ?? '');
 
 if ($id <= 0 || $name === '' || $phone === '' || $district === '' || $town === '' || $dealer === '') {
     http_response_code(400);
@@ -41,6 +44,12 @@ if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
     exit;
 }
 
+if (!in_array($language, ['EN', 'SI', 'TA'], true)) {
+    http_response_code(400);
+    echo json_encode(['status' => 'error', 'message' => 'Invalid language']);
+    exit;
+}
+
 $existsStmt = $pdo->prepare("SELECT id FROM bonanza_entries WHERE id = :id");
 $existsStmt->execute([':id' => $id]);
 if (!$existsStmt->fetch()) {
@@ -49,21 +58,35 @@ if (!$existsStmt->fetch()) {
     exit;
 }
 
-$stmt = $pdo->prepare(
-    "UPDATE bonanza_entries
-     SET name = :name, phone = :phone, email = :email, invoice_number = :invoice_number,
-         district = :district, town = :town, dealer = :dealer
-     WHERE id = :id"
-);
-$stmt->execute([
-    ':name'           => $name,
-    ':phone'          => $phone,
-    ':email'          => $email !== '' ? $email : null,
-    ':invoice_number' => $invoice !== '' ? $invoice : null,
-    ':district'       => $district,
-    ':town'           => $town,
-    ':dealer'         => $dealer,
-    ':id'             => $id,
-]);
+try {
+    $stmt = $pdo->prepare(
+        "UPDATE bonanza_entries
+         SET name = :name, phone = :phone, email = :email, invoice_number = :invoice_number,
+             district = :district, town = :town, dealer = :dealer, language = :language,
+             is_winner = :is_winner, winning_service = :winning_service
+         WHERE id = :id"
+    );
+    $stmt->execute([
+        ':name'            => $name,
+        ':phone'           => $phone,
+        ':email'           => $email !== '' ? $email : null,
+        ':invoice_number'  => $invoice !== '' ? $invoice : null,
+        ':district'        => $district,
+        ':town'            => $town,
+        ':dealer'          => $dealer,
+        ':language'        => $language,
+        ':is_winner'       => $isWinner,
+        ':winning_service' => $winningService !== '' ? $winningService : null,
+        ':id'              => $id,
+    ]);
+} catch (PDOException $e) {
+    http_response_code(500);
+    echo json_encode([
+        'status'  => 'error',
+        'message' => 'Could not update entry: ' . $e->getMessage()
+            . '. If this mentions an unknown column (winning_service), make sure that column exists on bonanza_entries.',
+    ]);
+    exit;
+}
 
 echo json_encode(['status' => 'success', 'message' => 'Entry updated']);
