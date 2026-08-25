@@ -15,8 +15,8 @@ try {
     $batchListStmt = $pdo->query("SELECT id, batch_name FROM draw_batches ORDER BY id DESC");
     $batchList = $batchListStmt->fetchAll();
 
-    $sql = "SELECT e.id, e.name, e.phone, e.email, e.invoice_number, e.district, e.town, e.dealer,
-                   e.language, e.is_winner, e.winning_service, e.batch_id, e.created_at, b.batch_name
+    $sql = "SELECT e.id, e.name, e.phone, e.district, e.town, e.dealer,
+                   e.language, e.is_winner, e.batch_id, e.created_at, b.batch_name
             FROM bonanza_entries e
             LEFT JOIN draw_batches b ON b.id = e.batch_id";
     $params = [];
@@ -30,11 +30,7 @@ try {
     $stmt->execute($params);
     $entries = $stmt->fetchAll();
 } catch (PDOException $e) {
-    // Most likely cause: database/04_add_entry_contact_fields.sql hasn't been
-    // run yet (email / invoice_number), or the winning_service column hasn't
-    // been added to bonanza_entries yet.
-    $loadError = 'Could not load entries: ' . $e->getMessage()
-        . '. If this mentions an unknown column (email, invoice_number, winning_service), make sure that column exists on bonanza_entries.';
+    $loadError = 'Could not load entries: ' . $e->getMessage();
 }
 ?>
 <!DOCTYPE html>
@@ -123,14 +119,11 @@ try {
                 <th>ID</th>
                 <th>Name</th>
                 <th>WhatsApp Number</th>
-                <th>Email</th>
-                <th>Invoice/Bill No.</th>
                 <th>District</th>
                 <th>City/Town</th>
                 <th>Dealer</th>
                 <th>Language</th>
                 <th>Winner Status</th>
-                <th>Winning Service</th>
                 <th>Batch</th>
                 <th>Submission Date</th>
                 <?php if ($isAdmin): ?><th>Actions</th><?php endif; ?>
@@ -138,7 +131,7 @@ try {
         </thead>
         <tbody>
             <?php if (empty($entries)): ?>
-                <tr><td colspan="<?= $isAdmin ? 15 : 13 ?>" style="text-align:center; color:#777;">No entries found.</td></tr>
+                <tr><td colspan="<?= $isAdmin ? 12 : 10 ?>" style="text-align:center; color:#777;">No entries found.</td></tr>
             <?php else: ?>
                 <?php foreach ($entries as $e): ?>
                     <tr data-id="<?= (int) $e['id'] ?>">
@@ -148,14 +141,11 @@ try {
                         <td>#<?= (int) $e['id'] ?></td>
                         <td><strong><?= htmlspecialchars($e['name']) ?></strong></td>
                         <td><?= htmlspecialchars($e['phone']) ?></td>
-                        <td><?= $e['email'] ? htmlspecialchars($e['email']) : '<span class="muted">—</span>' ?></td>
-                        <td><?= $e['invoice_number'] ? htmlspecialchars($e['invoice_number']) : '<span class="muted">—</span>' ?></td>
                         <td><?= htmlspecialchars($e['district']) ?></td>
                         <td><?= htmlspecialchars($e['town']) ?></td>
                         <td><?= htmlspecialchars($e['dealer']) ?></td>
                         <td><span class="badge badge-lang"><?= htmlspecialchars($e['language']) ?></span></td>
                         <td><?= $e['is_winner'] ? '<span class="badge badge-winner">Winner</span>' : '<span class="muted">—</span>' ?></td>
-                        <td><?= $e['winning_service'] ? htmlspecialchars($e['winning_service']) : '<span class="muted">—</span>' ?></td>
                         <td><?= htmlspecialchars($e['batch_name'] ?? '—') ?></td>
                         <td><?= date('M d, Y H:i', strtotime($e['created_at'])) ?></td>
                         <?php if ($isAdmin): ?>
@@ -164,14 +154,11 @@ try {
                                     "id" => (int) $e["id"],
                                     "name" => $e["name"],
                                     "phone" => $e["phone"],
-                                    "email" => $e["email"],
-                                    "invoice_number" => $e["invoice_number"],
                                     "district" => $e["district"],
                                     "town" => $e["town"],
                                     "dealer" => $e["dealer"],
                                     "language" => $e["language"],
                                     "is_winner" => (int) $e["is_winner"],
-                                    "winning_service" => $e["winning_service"],
                                 ]) ?>)'>Edit</button>
                                 <button class="del-btn" onclick="openDeleteModal([<?= (int) $e['id'] ?>])">Delete</button>
                             </td>
@@ -207,16 +194,6 @@ try {
                     <input type="text" id="edit-phone" required>
                 </div>
                 <div class="form-group">
-                    <label>Email</label>
-                    <input type="email" id="edit-email">
-                </div>
-            </div>
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Invoice/Bill Number</label>
-                    <input type="text" id="edit-invoice">
-                </div>
-                <div class="form-group">
                     <label>District</label>
                     <input type="text" id="edit-district" required>
                 </div>
@@ -247,10 +224,6 @@ try {
                         <option value="1">Winner</option>
                     </select>
                 </div>
-            </div>
-            <div class="form-group">
-                <label>Winning Service</label>
-                <input type="text" id="edit-winning-service" placeholder="e.g. Cash Prize, Voucher">
             </div>
             <div class="modal-actions">
                 <button type="button" class="btn btn-secondary" onclick="closeModal('editModal')">Cancel</button>
@@ -351,14 +324,11 @@ try {
         document.getElementById('edit-error').style.display = 'none';
         document.getElementById('edit-name').value = entry.name || '';
         document.getElementById('edit-phone').value = entry.phone || '';
-        document.getElementById('edit-email').value = entry.email || '';
-        document.getElementById('edit-invoice').value = entry.invoice_number || '';
         document.getElementById('edit-district').value = entry.district || '';
         document.getElementById('edit-town').value = entry.town || '';
         document.getElementById('edit-dealer').value = entry.dealer || '';
         document.getElementById('edit-language').value = entry.language || 'EN';
         document.getElementById('edit-is-winner').value = entry.is_winner ? '1' : '0';
-        document.getElementById('edit-winning-service').value = entry.winning_service || '';
         document.getElementById('editModal').classList.add('open');
     }
 
@@ -371,14 +341,11 @@ try {
             id: editEntryId,
             name: document.getElementById('edit-name').value.trim(),
             phone: document.getElementById('edit-phone').value.trim(),
-            email: document.getElementById('edit-email').value.trim(),
-            invoice_number: document.getElementById('edit-invoice').value.trim(),
             district: document.getElementById('edit-district').value.trim(),
             town: document.getElementById('edit-town').value.trim(),
             dealer: document.getElementById('edit-dealer').value.trim(),
             language: document.getElementById('edit-language').value,
-            is_winner: document.getElementById('edit-is-winner').value,
-            winning_service: document.getElementById('edit-winning-service').value.trim()
+            is_winner: document.getElementById('edit-is-winner').value
         });
 
         if (!ok) {

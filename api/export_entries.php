@@ -6,8 +6,8 @@ check_access(['admin']);
 
 $batchId = (int) ($_GET['batch_id'] ?? 0);
 
-$sql = "SELECT e.id, e.name, e.phone, e.email, e.invoice_number, e.district, e.town, e.dealer,
-               e.language, b.batch_name, e.is_winner, e.winning_service, e.verification_status, e.created_at
+$sql = "SELECT e.id, e.name, e.phone, e.district, e.town, e.dealer,
+               e.language, b.batch_name, e.is_winner, e.verification_status, e.created_at
         FROM bonanza_entries e
         LEFT JOIN draw_batches b ON b.id = e.batch_id";
 $params = [];
@@ -29,9 +29,8 @@ $output = fopen('php://output', 'w');
 fprintf($output, chr(0xEF) . chr(0xBB) . chr(0xBF)); // UTF-8 BOM for Excel support
 
 fputcsv($output, [
-    'ID', 'Name', 'WhatsApp Number', 'Email', 'Invoice/Bill No.', 'District', 'City/Town',
-    'Hardware Store/Dealer', 'Language', 'Winner Status', 'Winning Service', 'Batch Name',
-    'Verification Status', 'Submission Date',
+    'ID', 'Name', 'WhatsApp Number', 'District', 'City/Town', 'Hardware Store/Dealer',
+    'Language', 'Winner Status', 'Batch Name', 'Verification Status', 'Submission Date',
 ]);
 
 foreach ($rows as $row) {
@@ -39,14 +38,11 @@ foreach ($rows as $row) {
         $row['id'],
         $row['name'],
         $row['phone'],
-        $row['email'],
-        $row['invoice_number'],
         $row['district'],
         $row['town'],
         $row['dealer'],
         $row['language'],
         $row['is_winner'] ? 'Winner' : 'Not Winner',
-        $row['winning_service'],
         $row['batch_name'] ?? '',
         $row['verification_status'],
         $row['created_at'],
