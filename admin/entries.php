@@ -10,6 +10,8 @@ $searchFilter   = trim($_GET['search'] ?? '');
 $districtFilter = trim($_GET['district'] ?? '');
 $townFilter     = trim($_GET['town'] ?? '');
 $dealerFilter   = trim($_GET['dealer'] ?? '');
+$fromDateFilter = trim($_GET['from_date'] ?? '');
+$toDateFilter   = trim($_GET['to_date'] ?? '');
 
 $loadError = null;
 $batchList = [];
@@ -23,8 +25,32 @@ try {
     $batchList = $batchListStmt->fetchAll();
 
     $districtOptions = $pdo->query("SELECT DISTINCT district FROM bonanza_entries WHERE district IS NOT NULL AND district <> '' ORDER BY district ASC")->fetchAll(PDO::FETCH_COLUMN);
-    $townOptions     = $pdo->query("SELECT DISTINCT town FROM bonanza_entries WHERE town IS NOT NULL AND town <> '' ORDER BY town ASC")->fetchAll(PDO::FETCH_COLUMN);
-    $dealerOptions   = $pdo->query("SELECT DISTINCT dealer FROM bonanza_entries WHERE dealer IS NOT NULL AND dealer <> '' ORDER BY dealer ASC")->fetchAll(PDO::FETCH_COLUMN);
+
+    $townOptionsSql = "SELECT DISTINCT town FROM bonanza_entries WHERE town IS NOT NULL AND town <> ''";
+    $townOptionsParams = [];
+    if ($districtFilter !== '') {
+        $townOptionsSql .= " AND district = :district";
+        $townOptionsParams[':district'] = $districtFilter;
+    }
+    $townOptionsSql .= " ORDER BY town ASC";
+    $townOptionsStmt = $pdo->prepare($townOptionsSql);
+    $townOptionsStmt->execute($townOptionsParams);
+    $townOptions = $townOptionsStmt->fetchAll(PDO::FETCH_COLUMN);
+
+    $dealerOptionsSql = "SELECT DISTINCT dealer FROM bonanza_entries WHERE dealer IS NOT NULL AND dealer <> ''";
+    $dealerOptionsParams = [];
+    if ($districtFilter !== '') {
+        $dealerOptionsSql .= " AND district = :district";
+        $dealerOptionsParams[':district'] = $districtFilter;
+    }
+    if ($townFilter !== '') {
+        $dealerOptionsSql .= " AND town = :town";
+        $dealerOptionsParams[':town'] = $townFilter;
+    }
+    $dealerOptionsSql .= " ORDER BY dealer ASC";
+    $dealerOptionsStmt = $pdo->prepare($dealerOptionsSql);
+    $dealerOptionsStmt->execute($dealerOptionsParams);
+    $dealerOptions = $dealerOptionsStmt->fetchAll(PDO::FETCH_COLUMN);
 
     $sql = "SELECT e.id, e.name, e.phone, e.district, e.town, e.dealer,
                    e.language, e.is_winner, e.batch_id, e.created_at, b.batch_name
@@ -52,6 +78,14 @@ try {
         $where[] = "e.dealer = :dealer";
         $params[':dealer'] = $dealerFilter;
     }
+    if ($fromDateFilter !== '') {
+        $where[] = "DATE(e.created_at) >= :from_date";
+        $params[':from_date'] = $fromDateFilter;
+    }
+    if ($toDateFilter !== '') {
+        $where[] = "DATE(e.created_at) <= :to_date";
+        $params[':to_date'] = $toDateFilter;
+    }
     if ($where) {
         $sql .= " WHERE " . implode(' AND ', $where);
     }
@@ -65,11 +99,13 @@ try {
 }
 
 $exportParams = array_filter([
-    'batch_id' => $batchFilter > 0 ? $batchFilter : null,
-    'search'   => $searchFilter !== '' ? $searchFilter : null,
-    'district' => $districtFilter !== '' ? $districtFilter : null,
-    'town'     => $townFilter !== '' ? $townFilter : null,
-    'dealer'   => $dealerFilter !== '' ? $dealerFilter : null,
+    'batch_id'  => $batchFilter > 0 ? $batchFilter : null,
+    'search'    => $searchFilter !== '' ? $searchFilter : null,
+    'district'  => $districtFilter !== '' ? $districtFilter : null,
+    'town'      => $townFilter !== '' ? $townFilter : null,
+    'dealer'    => $dealerFilter !== '' ? $dealerFilter : null,
+    'from_date' => $fromDateFilter !== '' ? $fromDateFilter : null,
+    'to_date'   => $toDateFilter !== '' ? $toDateFilter : null,
 ], fn($v) => $v !== null);
 $exportUrl = '/api/export_entries.php' . ($exportParams ? '?' . http_build_query($exportParams) : '');
 ?>
@@ -158,6 +194,14 @@ $exportUrl = '/api/export_entries.php' . ($exportParams ? '?' . http_build_query
             <div class="stat-label">Today's Entries</div>
             <div class="stat-value" id="today-count">—</div>
         </div>
+        <div class="stat-card">
+            <div class="stat-label">Top District</div>
+            <div class="stat-value" id="top-district" style="font-size:20px;">—</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Top Dealer</div>
+            <div class="stat-value" id="top-dealer" style="font-size:20px;">—</div>
+        </div>
         <div class="chart-card">
             <div class="stat-label">New Entries Trend</div>
             <div class="chart-wrap"><canvas id="trend-chart"></canvas></div>
@@ -176,26 +220,29 @@ $exportUrl = '/api/export_entries.php' . ($exportParams ? '?' . http_build_query
             <?php endforeach; ?>
         </select>
 
-        <select name="district" onchange="document.getElementById('filter-form').submit()">
+        <select name="district" id="district-select" onchange="onDistrictChange()">
             <option value="">All Districts</option>
             <?php foreach ($districtOptions as $d): ?>
                 <option value="<?= htmlspecialchars($d) ?>" <?= $districtFilter === $d ? 'selected' : '' ?>><?= htmlspecialchars($d) ?></option>
             <?php endforeach; ?>
         </select>
 
-        <select name="town" onchange="document.getElementById('filter-form').submit()">
+        <select name="town" id="town-select" onchange="onTownChange()">
             <option value="">All Cities/Towns</option>
             <?php foreach ($townOptions as $t): ?>
                 <option value="<?= htmlspecialchars($t) ?>" <?= $townFilter === $t ? 'selected' : '' ?>><?= htmlspecialchars($t) ?></option>
             <?php endforeach; ?>
         </select>
 
-        <select name="dealer" onchange="document.getElementById('filter-form').submit()">
+        <select name="dealer" id="dealer-select" onchange="document.getElementById('filter-form').submit()">
             <option value="">All Dealers</option>
             <?php foreach ($dealerOptions as $d): ?>
                 <option value="<?= htmlspecialchars($d) ?>" <?= $dealerFilter === $d ? 'selected' : '' ?>><?= htmlspecialchars($d) ?></option>
             <?php endforeach; ?>
         </select>
+
+        <input type="date" id="from-date-input" name="from_date" value="<?= htmlspecialchars($fromDateFilter) ?>" onchange="document.getElementById('filter-form').submit()">
+        <input type="date" id="to-date-input" name="to_date" value="<?= htmlspecialchars($toDateFilter) ?>" onchange="document.getElementById('filter-form').submit()">
 
         <button type="button" class="btn btn-secondary btn-small" onclick="window.location.href='entries.php'">Clear Filters</button>
     </form>
@@ -462,10 +509,73 @@ $exportUrl = '/api/export_entries.php' . ($exportParams ? '?' . http_build_query
         searchDebounce = setTimeout(() => document.getElementById('filter-form').submit(), 500);
     });
 
-    /* ---------- Analytics: today's count + trend chart ---------- */
+    /* ---------- Cascading district/town/dealer filters ---------- */
+
+    function populateSelect(select, options, selectedValue, allLabel) {
+        const current = selectedValue || select.value;
+        select.innerHTML = '';
+        const allOpt = document.createElement('option');
+        allOpt.value = '';
+        allOpt.innerText = allLabel;
+        select.appendChild(allOpt);
+        options.forEach(function (opt) {
+            const el = document.createElement('option');
+            el.value = opt;
+            el.innerText = opt;
+            if (opt === current) el.selected = true;
+            select.appendChild(el);
+        });
+    }
+
+    async function fetchFilterOptions(district, town) {
+        const params = new URLSearchParams();
+        if (district) params.set('district', district);
+        if (town) params.set('town', town);
+        const res = await fetch('/api/get_filter_options.php?' + params.toString(), { headers: { 'Accept': 'application/json' } });
+        return res.json();
+    }
+
+    async function onDistrictChange() {
+        const district = document.getElementById('district-select').value;
+        const townSelect = document.getElementById('town-select');
+        const dealerSelect = document.getElementById('dealer-select');
+        try {
+            const data = await fetchFilterOptions(district, '');
+            if (data.status === 'success') {
+                populateSelect(townSelect, data.towns, '', 'All Cities/Towns');
+                populateSelect(dealerSelect, data.dealers, '', 'All Dealers');
+            }
+        } finally {
+            document.getElementById('filter-form').submit();
+        }
+    }
+
+    async function onTownChange() {
+        const district = document.getElementById('district-select').value;
+        const town = document.getElementById('town-select').value;
+        const dealerSelect = document.getElementById('dealer-select');
+        try {
+            const data = await fetchFilterOptions(district, town);
+            if (data.status === 'success') {
+                populateSelect(dealerSelect, data.dealers, '', 'All Dealers');
+            }
+        } finally {
+            document.getElementById('filter-form').submit();
+        }
+    }
+
+    /* ---------- Analytics: today's count + trend chart + top district/dealer ---------- */
     (async function loadEntryStats() {
+        const params = new URLSearchParams();
         const batchId = <?= $batchFilter > 0 ? $batchFilter : 0 ?>;
-        const url = '/api/get_entry_stats.php' + (batchId > 0 ? `?batch_id=${batchId}` : '');
+        if (batchId > 0) params.set('batch_id', batchId);
+        <?php if ($searchFilter !== ''): ?>params.set('search', <?= json_encode($searchFilter) ?>);<?php endif; ?>
+        <?php if ($districtFilter !== ''): ?>params.set('district', <?= json_encode($districtFilter) ?>);<?php endif; ?>
+        <?php if ($townFilter !== ''): ?>params.set('town', <?= json_encode($townFilter) ?>);<?php endif; ?>
+        <?php if ($dealerFilter !== ''): ?>params.set('dealer', <?= json_encode($dealerFilter) ?>);<?php endif; ?>
+        <?php if ($fromDateFilter !== ''): ?>params.set('from_date', <?= json_encode($fromDateFilter) ?>);<?php endif; ?>
+        <?php if ($toDateFilter !== ''): ?>params.set('to_date', <?= json_encode($toDateFilter) ?>);<?php endif; ?>
+        const url = '/api/get_entry_stats.php' + (params.toString() ? `?${params.toString()}` : '');
 
         try {
             const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
@@ -473,6 +583,10 @@ $exportUrl = '/api/export_entries.php' . ($exportParams ? '?' . http_build_query
             if (data.status !== 'success') return;
 
             document.getElementById('today-count').innerText = data.today_count;
+            document.getElementById('top-district').innerText = data.top_district
+                ? `${data.top_district.name} (${data.top_district.count})` : '—';
+            document.getElementById('top-dealer').innerText = data.top_dealer
+                ? `${data.top_dealer.name} (${data.top_dealer.count})` : '—';
 
             const labels = data.trend.map(row => row.date);
             const counts = data.trend.map(row => row.count);

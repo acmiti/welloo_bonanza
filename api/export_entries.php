@@ -9,6 +9,8 @@ $search   = trim($_GET['search'] ?? '');
 $district = trim($_GET['district'] ?? '');
 $town     = trim($_GET['town'] ?? '');
 $dealer   = trim($_GET['dealer'] ?? '');
+$fromDate = trim($_GET['from_date'] ?? '');
+$toDate   = trim($_GET['to_date'] ?? '');
 
 $sql = "SELECT e.id, e.name, e.phone, e.district, e.town, e.dealer,
                e.language, b.batch_name, e.is_winner, e.verification_status, e.created_at
@@ -36,6 +38,14 @@ if ($town !== '') {
 if ($dealer !== '') {
     $where[] = "e.dealer = :dealer";
     $params[':dealer'] = $dealer;
+}
+if ($fromDate !== '') {
+    $where[] = "DATE(e.created_at) >= :from_date";
+    $params[':from_date'] = $fromDate;
+}
+if ($toDate !== '') {
+    $where[] = "DATE(e.created_at) <= :to_date";
+    $params[':to_date'] = $toDate;
 }
 
 if ($where) {
