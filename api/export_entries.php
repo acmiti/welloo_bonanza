@@ -1,5 +1,7 @@
 <?php
-// api/export_entries.php — CSV export of entries, respecting active filters
+// api/export_entries.php — CSV export of entries, respecting active filters.
+// A request with no filter params (e.g. the "Export All Entries" action) exports
+// every row in bonanza_entries. Restricted strictly to the admin (super admin) role.
 require_once __DIR__ . '/../includes/auth.php';
 
 check_access(['admin']);

@@ -203,7 +203,10 @@ $exportUrl = '/api/export_entries.php' . ($exportParams ? '?' . http_build_query
     <div class="header">
         <h1>Entries</h1>
         <div class="nav-links">
-            <a class="btn" id="export-btn" href="<?= htmlspecialchars($exportUrl) ?>">Export to CSV</a>
+            <a class="btn" id="export-btn" href="<?= htmlspecialchars($exportUrl) ?>">Export Filtered</a>
+            <?php if ($isAdmin): ?>
+                <a class="btn btn-secondary" id="export-all-btn" href="/api/export_entries.php">Export All Entries</a>
+            <?php endif; ?>
         </div>
     </div>
 
