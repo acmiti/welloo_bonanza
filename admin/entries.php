@@ -19,6 +19,7 @@ $entries = [];
 $districtOptions = [];
 $townOptions = [];
 $dealerOptions = [];
+$totalEntriesCount = 0;
 
 try {
     $batchListStmt = $pdo->query("SELECT id, batch_name FROM draw_batches ORDER BY id DESC");
@@ -94,6 +95,14 @@ try {
     $stmt = $pdo->prepare($sql);
     $stmt->execute($params);
     $entries = $stmt->fetchAll();
+
+    $countSql = "SELECT COUNT(*) FROM bonanza_entries e";
+    if ($where) {
+        $countSql .= " WHERE " . implode(' AND ', $where);
+    }
+    $countStmt = $pdo->prepare($countSql);
+    $countStmt->execute($params);
+    $totalEntriesCount = (int) $countStmt->fetchColumn();
 } catch (PDOException $e) {
     $loadError = 'Could not load entries: ' . $e->getMessage();
 }
@@ -135,13 +144,23 @@ $exportUrl = '/api/export_entries.php' . ($exportParams ? '?' . http_build_query
         .toolbar input#search-input { min-width: 220px; flex: 1 1 220px; }
         .toolbar select { min-width: 150px; }
 
-        .stats-row { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 20px; }
-        .stat-card { background: #1A1A1A; border: 1px solid #333; border-radius: 10px; padding: 16px 20px; min-width: 160px; }
+        .stats-row { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 20px; align-items: stretch; }
+        .stats-col { display: flex; flex-direction: column; gap: 16px; flex: 0 0 240px; }
+        .stat-card { background: #1A1A1A; border: 1px solid #333; border-radius: 10px; padding: 16px 20px; flex: 1; display: flex; flex-direction: column; justify-content: center; }
         .stat-card .stat-label { color: #888; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
         .stat-card .stat-value { color: #FF9900; font-size: 26px; font-weight: 700; }
         .chart-card { background: #1A1A1A; border: 1px solid #333; border-radius: 10px; padding: 16px 20px; flex: 1 1 320px; }
         .chart-card .stat-label { color: #888; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; }
-        .chart-card .chart-wrap { position: relative; height: 220px; }
+        .chart-card .chart-wrap { position: relative; height: 100%; min-height: 220px; }
+
+        .toolbar-section { width: 100%; border-top: 1px solid #2A2A2A; margin-top: 6px; padding-top: 14px; display: flex; flex-direction: column; gap: 10px; }
+        .toolbar-section-label { color: #888; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700; }
+        .date-range-group { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; }
+        .date-field { display: flex; align-items: center; gap: 8px; }
+        .date-field label { color: #DDD; font-size: 12.5px; font-weight: 600; }
+
+        .table-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px; }
+        .total-count-badge { background: #1A1A1A; border: 1px solid #FF6600; color: #FF9900; padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 700; }
 
         table { width: 100%; border-collapse: collapse; background: #1A1A1A; border-radius: 10px; overflow: hidden; border: 1px solid #333; }
         th, td { padding: 11px 12px; text-align: left; font-size: 12.5px; border-bottom: 1px solid #2A2A2A; white-space: nowrap; }
@@ -190,17 +209,19 @@ $exportUrl = '/api/export_entries.php' . ($exportParams ? '?' . http_build_query
     </div>
 
     <div class="stats-row">
-        <div class="stat-card">
-            <div class="stat-label">Today's Entries</div>
-            <div class="stat-value" id="today-count">—</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-label">Top District</div>
-            <div class="stat-value" id="top-district" style="font-size:20px;">—</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-label">Top Dealer</div>
-            <div class="stat-value" id="top-dealer" style="font-size:20px;">—</div>
+        <div class="stats-col">
+            <div class="stat-card">
+                <div class="stat-label">Today's Entries</div>
+                <div class="stat-value" id="today-count">—</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Top District</div>
+                <div class="stat-value" id="top-district" style="font-size:20px;">—</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Top Dealer</div>
+                <div class="stat-value" id="top-dealer" style="font-size:20px;">—</div>
+            </div>
         </div>
         <div class="chart-card">
             <div class="stat-label">New Entries Trend</div>
@@ -241,15 +262,29 @@ $exportUrl = '/api/export_entries.php' . ($exportParams ? '?' . http_build_query
             <?php endforeach; ?>
         </select>
 
-        <input type="date" id="from-date-input" name="from_date" value="<?= htmlspecialchars($fromDateFilter) ?>" onchange="document.getElementById('filter-form').submit()">
-        <input type="date" id="to-date-input" name="to_date" value="<?= htmlspecialchars($toDateFilter) ?>" onchange="document.getElementById('filter-form').submit()">
-
         <button type="button" class="btn btn-secondary btn-small" onclick="window.location.href='entries.php'">Clear Filters</button>
+
+        <div class="toolbar-section">
+            <div class="toolbar-section-label">Date Range Filter</div>
+            <div class="date-range-group">
+                <div class="date-field">
+                    <label for="from-date-input">From:</label>
+                    <input type="date" id="from-date-input" name="from_date" value="<?= htmlspecialchars($fromDateFilter) ?>" onchange="document.getElementById('filter-form').submit()">
+                </div>
+                <div class="date-field">
+                    <label for="to-date-input">To:</label>
+                    <input type="date" id="to-date-input" name="to_date" value="<?= htmlspecialchars($toDateFilter) ?>" onchange="document.getElementById('filter-form').submit()">
+                </div>
+            </div>
+        </div>
     </form>
 
     <?php if ($loadError): ?>
         <div class="load-error"><?= htmlspecialchars($loadError) ?></div>
     <?php else: ?>
+    <div class="table-header-row">
+        <div class="total-count-badge">Total Entries: <span id="total-entries-count"><?= number_format($totalEntriesCount) ?></span></div>
+    </div>
     <div style="overflow-x:auto;">
     <table>
         <thead>
