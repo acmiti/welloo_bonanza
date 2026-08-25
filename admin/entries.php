@@ -13,6 +13,12 @@ $dealerFilter   = trim($_GET['dealer'] ?? '');
 $fromDateFilter = trim($_GET['from_date'] ?? '');
 $toDateFilter   = trim($_GET['to_date'] ?? '');
 
+$perPage = 25;
+$currentPage = (int) ($_GET['page'] ?? 1);
+if ($currentPage < 1) {
+    $currentPage = 1;
+}
+
 $loadError = null;
 $batchList = [];
 $entries = [];
@@ -20,6 +26,7 @@ $districtOptions = [];
 $townOptions = [];
 $dealerOptions = [];
 $totalEntriesCount = 0;
+$totalPages = 1;
 
 try {
     $batchListStmt = $pdo->query("SELECT id, batch_name FROM draw_batches ORDER BY id DESC");
@@ -90,11 +97,6 @@ try {
     if ($where) {
         $sql .= " WHERE " . implode(' AND ', $where);
     }
-    $sql .= " ORDER BY e.id DESC LIMIT 200";
-
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute($params);
-    $entries = $stmt->fetchAll();
 
     $countSql = "SELECT COUNT(*) FROM bonanza_entries e";
     if ($where) {
@@ -103,6 +105,22 @@ try {
     $countStmt = $pdo->prepare($countSql);
     $countStmt->execute($params);
     $totalEntriesCount = (int) $countStmt->fetchColumn();
+
+    $totalPages = max(1, (int) ceil($totalEntriesCount / $perPage));
+    if ($currentPage > $totalPages) {
+        $currentPage = $totalPages;
+    }
+    $offset = ($currentPage - 1) * $perPage;
+
+    $sql .= " ORDER BY e.id DESC LIMIT $perPage OFFSET :offset";
+
+    $stmt = $pdo->prepare($sql);
+    foreach ($params as $key => $value) {
+        $stmt->bindValue($key, $value);
+    }
+    $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+    $stmt->execute();
+    $entries = $stmt->fetchAll();
 } catch (PDOException $e) {
     $loadError = 'Could not load entries: ' . $e->getMessage();
 }
@@ -117,6 +135,17 @@ $exportParams = array_filter([
     'to_date'   => $toDateFilter !== '' ? $toDateFilter : null,
 ], fn($v) => $v !== null);
 $exportUrl = '/api/export_entries.php' . ($exportParams ? '?' . http_build_query($exportParams) : '');
+
+$pageUrlParams = $exportParams;
+function pageUrl(int $page) {
+    global $pageUrlParams;
+    $params = $pageUrlParams;
+    $params['page'] = $page;
+    return 'entries.php?' . http_build_query($params);
+}
+
+$rangeStart = $totalEntriesCount > 0 ? (($currentPage - 1) * $perPage) + 1 : 0;
+$rangeEnd = min($currentPage * $perPage, $totalEntriesCount);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -170,6 +199,13 @@ $exportUrl = '/api/export_entries.php' . ($exportParams ? '?' . http_build_query
         .badge-winner { background: rgba(37, 211, 102, 0.15); color: #25D366; }
         .muted { color: #666; }
         .load-error { background: rgba(255, 51, 51, 0.1); border: 1px solid #FF3333; color: #FF6B6B; padding: 16px 18px; border-radius: 10px; font-size: 13px; line-height: 1.6; margin-bottom: 20px; }
+
+        .pagination-bar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-top: 16px; }
+        .pagination-summary { color: #999; font-size: 12.5px; }
+        .pagination-controls { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+        .pagination-controls .btn[disabled] { opacity: 0.4; cursor: not-allowed; }
+        .pagination-current { background: #FF6600; color: #000; }
+        .pagination-ellipsis { color: #666; padding: 0 4px; font-size: 13px; }
 
         .row-actions { display: flex; gap: 6px; }
         .row-actions button { background: #262626; color: #DDD; border: 1px solid #3A3A3A; padding: 5px 9px; border-radius: 6px; font-size: 11px; cursor: pointer; }
@@ -350,6 +386,50 @@ $exportUrl = '/api/export_entries.php' . ($exportParams ? '?' . http_build_query
             <?php endif; ?>
         </tbody>
     </table>
+    </div>
+
+    <div class="pagination-bar">
+        <div class="pagination-summary">
+            <?php if ($totalEntriesCount > 0): ?>
+                Showing <?= number_format($rangeStart) ?> to <?= number_format($rangeEnd) ?> of <?= number_format($totalEntriesCount) ?> entries
+            <?php else: ?>
+                Showing 0 entries
+            <?php endif; ?>
+        </div>
+        <div class="pagination-controls">
+            <?php if ($currentPage <= 1): ?>
+                <button class="btn btn-secondary btn-small" disabled>Previous</button>
+            <?php else: ?>
+                <a class="btn btn-secondary btn-small" href="<?= htmlspecialchars(pageUrl($currentPage - 1)) ?>">Previous</a>
+            <?php endif; ?>
+
+            <?php
+            $pageWindow = 2;
+            $windowStart = max(1, $currentPage - $pageWindow);
+            $windowEnd = min($totalPages, $currentPage + $pageWindow);
+            ?>
+            <?php if ($windowStart > 1): ?>
+                <a class="btn btn-secondary btn-small" href="<?= htmlspecialchars(pageUrl(1)) ?>">1</a>
+                <?php if ($windowStart > 2): ?><span class="pagination-ellipsis">…</span><?php endif; ?>
+            <?php endif; ?>
+            <?php for ($p = $windowStart; $p <= $windowEnd; $p++): ?>
+                <?php if ($p === $currentPage): ?>
+                    <span class="btn btn-small pagination-current"><?= $p ?></span>
+                <?php else: ?>
+                    <a class="btn btn-secondary btn-small" href="<?= htmlspecialchars(pageUrl($p)) ?>"><?= $p ?></a>
+                <?php endif; ?>
+            <?php endfor; ?>
+            <?php if ($windowEnd < $totalPages): ?>
+                <?php if ($windowEnd < $totalPages - 1): ?><span class="pagination-ellipsis">…</span><?php endif; ?>
+                <a class="btn btn-secondary btn-small" href="<?= htmlspecialchars(pageUrl($totalPages)) ?>"><?= $totalPages ?></a>
+            <?php endif; ?>
+
+            <?php if ($currentPage >= $totalPages): ?>
+                <button class="btn btn-secondary btn-small" disabled>Next</button>
+            <?php else: ?>
+                <a class="btn btn-secondary btn-small" href="<?= htmlspecialchars(pageUrl($currentPage + 1)) ?>">Next</a>
+            <?php endif; ?>
+        </div>
     </div>
     <?php endif; ?>
 </div>
