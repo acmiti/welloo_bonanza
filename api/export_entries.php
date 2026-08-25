@@ -15,7 +15,7 @@ $fromDate = trim($_GET['from_date'] ?? '');
 $toDate   = trim($_GET['to_date'] ?? '');
 
 $sql = "SELECT e.id, e.name, e.phone, e.district, e.town, e.dealer,
-               e.language, b.batch_name, e.is_winner, e.verification_status, e.created_at
+               e.language, b.batch_name, e.is_winner, e.verification_status, e.created_at, e.multiplier
         FROM bonanza_entries e
         LEFT JOIN draw_batches b ON b.id = e.batch_id";
 $where = [];
@@ -68,7 +68,7 @@ fprintf($output, chr(0xEF) . chr(0xBB) . chr(0xBF)); // UTF-8 BOM for Excel supp
 
 fputcsv($output, [
     'ID', 'Name', 'WhatsApp Number', 'District', 'City/Town', 'Hardware Store/Dealer',
-    'Language', 'Winner Status', 'Batch Name', 'Verification Status', 'Submission Date',
+    'Language', 'Winner Status', 'Batch Name', 'Verification Status', 'Submission Date', 'Winning Chances (Multiplier)',
 ]);
 
 foreach ($rows as $row) {
@@ -84,6 +84,7 @@ foreach ($rows as $row) {
         $row['batch_name'] ?? '',
         $row['verification_status'],
         $row['created_at'],
+        $row['multiplier'] !== null && $row['multiplier'] !== '' ? $row['multiplier'] : 1,
     ]);
 }
 
