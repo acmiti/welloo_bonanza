@@ -9,6 +9,24 @@ check_access(['admin', 'draw_manager', 'data_entry']);
 $district = trim($_GET['district'] ?? '');
 $town     = trim($_GET['town'] ?? '');
 
+if (($_GET['mode'] ?? '') === 'triples') {
+    try {
+        $triples = $pdo->query(
+            "SELECT DISTINCT district, town, dealer FROM bonanza_entries
+             WHERE district IS NOT NULL AND district <> ''
+               AND town IS NOT NULL AND town <> ''
+               AND dealer IS NOT NULL AND dealer <> ''
+             ORDER BY district ASC, town ASC, dealer ASC"
+        )->fetchAll(PDO::FETCH_ASSOC);
+
+        echo json_encode(['status' => 'success', 'triples' => $triples]);
+    } catch (PDOException $e) {
+        http_response_code(500);
+        echo json_encode(['status' => 'error', 'message' => 'Could not load filter options: ' . $e->getMessage()]);
+    }
+    exit;
+}
+
 try {
     $districts = $pdo->query(
         "SELECT DISTINCT district FROM bonanza_entries WHERE district IS NOT NULL AND district <> '' ORDER BY district ASC"

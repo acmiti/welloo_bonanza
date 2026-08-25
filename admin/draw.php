@@ -70,8 +70,8 @@ $batches = $stmt->fetchAll();
         .criteria-box .criteria-hint { color: #777; font-size: 11.5px; margin-bottom: 14px; }
         .criteria-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
         .criteria-fields label { display: block; color: #AAA; font-size: 11px; text-transform: uppercase; margin-bottom: 5px; }
-        .criteria-fields input { width: 100%; background: #0F0F0F; border: 1px solid #333; color: #FFF; padding: 9px 10px; border-radius: 6px; font-size: 13px; }
-        .criteria-fields input:focus { outline: none; border-color: #4DA6FF; }
+        .criteria-fields select { width: 100%; background: #0F0F0F; border: 1px solid #333; color: #FFF; padding: 9px 10px; border-radius: 6px; font-size: 13px; }
+        .criteria-fields select:focus { outline: none; border-color: #4DA6FF; }
 
         #winners-section { display: none; }
         .winner-row { background: #141414; border: 1px solid #2A2A2A; border-radius: 6px; padding: 10px 14px; font-size: 12.5px; color: #DDD; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
@@ -154,15 +154,15 @@ $batches = $stmt->fetchAll();
             <div class="criteria-fields">
                 <div>
                     <label for="target-district">Target District</label>
-                    <input type="text" id="target-district" placeholder="e.g. Kandy">
+                    <select id="target-district"><option value="">All (Fully Random)</option></select>
                 </div>
                 <div>
                     <label for="target-city">Target City / Town</label>
-                    <input type="text" id="target-city" placeholder="e.g. Gampola">
+                    <select id="target-city"><option value="">All (Fully Random)</option></select>
                 </div>
                 <div>
                     <label for="target-dealer">Target Dealer</label>
-                    <input type="text" id="target-dealer" placeholder="e.g. G.M.lanka">
+                    <select id="target-dealer"><option value="">All (Fully Random)</option></select>
                 </div>
             </div>
         </div>
@@ -255,6 +255,92 @@ $batches = $stmt->fetchAll();
 
         window.open('/admin/draw_stage.php?' + params.toString(), '_blank', 'width=820,height=900,noopener');
     }
+
+    /* ---------- Target criteria: bi-directional cascading dropdowns ---------- */
+
+    let criteriaTriples = [];
+
+    async function initCriteriaDropdowns() {
+        const districtSelect = document.getElementById('target-district');
+        if (!districtSelect || districtSelect.tagName !== 'SELECT') return; // non-admin: hidden inputs, nothing to wire up
+
+        try {
+            const res = await fetch('/api/get_filter_options.php?mode=triples', { headers: { 'Accept': 'application/json' } });
+            const data = await res.json();
+            if (data.status === 'success') criteriaTriples = data.triples;
+        } catch (e) { /* leave dropdowns empty-but-usable if this fails */ }
+
+        applyCascade(null);
+
+        districtSelect.addEventListener('change', () => applyCascade('district'));
+        document.getElementById('target-city')?.addEventListener('change', () => applyCascade('city'));
+        document.getElementById('target-dealer')?.addEventListener('change', () => applyCascade('dealer'));
+    }
+
+    function uniqueSorted(values) {
+        return [...new Set(values.filter(v => v !== '' && v != null))].sort();
+    }
+
+    function populateCriteriaSelect(select, values, selectedValue) {
+        const current = select.value;
+        select.innerHTML = '';
+        const allOpt = document.createElement('option');
+        allOpt.value = '';
+        allOpt.innerText = 'All (Fully Random)';
+        select.appendChild(allOpt);
+        values.forEach(v => {
+            const opt = document.createElement('option');
+            opt.value = v;
+            opt.innerText = v;
+            select.appendChild(opt);
+        });
+        const target = selectedValue !== undefined ? selectedValue : current;
+        select.value = values.includes(target) ? target : '';
+        return select.value;
+    }
+
+    function applyCascade(source) {
+        const districtSelect = document.getElementById('target-district');
+        const citySelect = document.getElementById('target-city');
+        const dealerSelect = document.getElementById('target-dealer');
+        if (!districtSelect || !citySelect || !dealerSelect) return;
+
+        let sel = {
+            district: districtSelect.value,
+            city: citySelect.value,
+            dealer: dealerSelect.value,
+        };
+
+        // Auto-select the parent(s) implied by a more specific pick.
+        if (source === 'city' && sel.city) {
+            const matches = criteriaTriples.filter(t => t.town === sel.city);
+            const districts = uniqueSorted(matches.map(t => t.district));
+            if (districts.length === 1) sel.district = districts[0];
+        }
+        if (source === 'dealer' && sel.dealer) {
+            const matches = criteriaTriples.filter(t => t.dealer === sel.dealer);
+            const districts = uniqueSorted(matches.map(t => t.district));
+            const towns = uniqueSorted(matches.map(t => t.town));
+            if (districts.length === 1) sel.district = districts[0];
+            if (towns.length === 1) sel.city = towns[0];
+        }
+
+        const districtOptions = uniqueSorted(criteriaTriples
+            .filter(t => (!sel.city || t.town === sel.city) && (!sel.dealer || t.dealer === sel.dealer))
+            .map(t => t.district));
+        const townOptions = uniqueSorted(criteriaTriples
+            .filter(t => (!sel.district || t.district === sel.district) && (!sel.dealer || t.dealer === sel.dealer))
+            .map(t => t.town));
+        const dealerOptions = uniqueSorted(criteriaTriples
+            .filter(t => (!sel.district || t.district === sel.district) && (!sel.city || t.town === sel.city))
+            .map(t => t.dealer));
+
+        sel.district = populateCriteriaSelect(districtSelect, districtOptions, sel.district);
+        sel.city = populateCriteriaSelect(citySelect, townOptions, sel.city);
+        sel.dealer = populateCriteriaSelect(dealerSelect, dealerOptions, sel.dealer);
+    }
+
+    initCriteriaDropdowns();
 
     /* ---------- Wire up shared wheel engine hooks ---------- */
 
