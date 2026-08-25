@@ -253,7 +253,7 @@ $batches = $stmt->fetchAll();
         if (city) params.set('target_city', city);
         if (dealer) params.set('target_dealer', dealer);
 
-        window.open('/admin/draw_stage.php?' + params.toString(), '_blank', 'width=820,height=900,noopener');
+        window.open('/admin/draw_stage.php?' + params.toString(), 'StreamView', 'width=1280,height=720,menubar=no,toolbar=no,location=no,status=no,resizable=yes,noopener');
     }
 
     /* ---------- Target criteria: bi-directional cascading dropdowns ---------- */

@@ -56,9 +56,13 @@ $targetDealer   = trim((string) ($_GET['target_dealer'] ?? ''));
 
         #toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(80px); background: #1A1A1A; border: 1px solid #FF6600; border-radius: 8px; padding: 10px 18px; font-size: 13px; opacity: 0; transition: 0.3s ease; z-index: 300; }
         #toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+        #fullscreen-btn { position: fixed; top: 16px; right: 16px; background: #1A1A1A; border: 1px solid #333; color: #AAA; padding: 8px 12px; border-radius: 8px; font-size: 12px; cursor: pointer; z-index: 200; opacity: 0.6; transition: opacity 0.2s ease; }
+        #fullscreen-btn:hover { opacity: 1; border-color: #FF6600; color: #FF9900; }
     </style>
 </head>
 <body>
+    <button type="button" id="fullscreen-btn" onclick="toggleFullscreen()">⛶ Fullscreen</button>
     <div class="stage">
         <div class="stage-brand">Welloo Bonanza — Live Draw</div>
         <div class="pool-box">
@@ -100,6 +104,23 @@ $targetDealer   = trim((string) ($_GET['target_dealer'] ?? ''));
 
     <script src="/admin/assets/draw-wheel.js"></script>
     <script>
+        /* ---------- Fullscreen presentation mode ---------- */
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(() => {});
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
+        document.addEventListener('fullscreenchange', function () {
+            const btn = document.getElementById('fullscreen-btn');
+            btn.innerText = document.fullscreenElement ? '⛶ Exit Fullscreen' : '⛶ Fullscreen';
+        });
+
+        document.querySelector('.wheel-stage').addEventListener('dblclick', toggleFullscreen);
+
         const STAGE_BATCH_IDS = <?= json_encode($batchIds) ?>;
 
         DrawWheel.onPoolLoaded = function (pool) {
