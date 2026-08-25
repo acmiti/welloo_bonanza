@@ -5,24 +5,55 @@ check_access(['admin', 'draw_manager', 'data_entry']);
 
 $isAdmin = $_SESSION['role'] === 'admin';
 
-$batchFilter = (int) ($_GET['batch_id'] ?? 0);
+$batchFilter    = (int) ($_GET['batch_id'] ?? 0);
+$searchFilter   = trim($_GET['search'] ?? '');
+$districtFilter = trim($_GET['district'] ?? '');
+$townFilter     = trim($_GET['town'] ?? '');
+$dealerFilter   = trim($_GET['dealer'] ?? '');
 
 $loadError = null;
 $batchList = [];
 $entries = [];
+$districtOptions = [];
+$townOptions = [];
+$dealerOptions = [];
 
 try {
     $batchListStmt = $pdo->query("SELECT id, batch_name FROM draw_batches ORDER BY id DESC");
     $batchList = $batchListStmt->fetchAll();
 
+    $districtOptions = $pdo->query("SELECT DISTINCT district FROM bonanza_entries WHERE district IS NOT NULL AND district <> '' ORDER BY district ASC")->fetchAll(PDO::FETCH_COLUMN);
+    $townOptions     = $pdo->query("SELECT DISTINCT town FROM bonanza_entries WHERE town IS NOT NULL AND town <> '' ORDER BY town ASC")->fetchAll(PDO::FETCH_COLUMN);
+    $dealerOptions   = $pdo->query("SELECT DISTINCT dealer FROM bonanza_entries WHERE dealer IS NOT NULL AND dealer <> '' ORDER BY dealer ASC")->fetchAll(PDO::FETCH_COLUMN);
+
     $sql = "SELECT e.id, e.name, e.phone, e.district, e.town, e.dealer,
                    e.language, e.is_winner, e.batch_id, e.created_at, b.batch_name
             FROM bonanza_entries e
             LEFT JOIN draw_batches b ON b.id = e.batch_id";
+    $where = [];
     $params = [];
     if ($batchFilter > 0) {
-        $sql .= " WHERE e.batch_id = :batch_id";
+        $where[] = "e.batch_id = :batch_id";
         $params[':batch_id'] = $batchFilter;
+    }
+    if ($searchFilter !== '') {
+        $where[] = "(e.name LIKE :search OR e.phone LIKE :search)";
+        $params[':search'] = '%' . $searchFilter . '%';
+    }
+    if ($districtFilter !== '') {
+        $where[] = "e.district = :district";
+        $params[':district'] = $districtFilter;
+    }
+    if ($townFilter !== '') {
+        $where[] = "e.town = :town";
+        $params[':town'] = $townFilter;
+    }
+    if ($dealerFilter !== '') {
+        $where[] = "e.dealer = :dealer";
+        $params[':dealer'] = $dealerFilter;
+    }
+    if ($where) {
+        $sql .= " WHERE " . implode(' AND ', $where);
     }
     $sql .= " ORDER BY e.id DESC LIMIT 200";
 
@@ -32,6 +63,15 @@ try {
 } catch (PDOException $e) {
     $loadError = 'Could not load entries: ' . $e->getMessage();
 }
+
+$exportParams = array_filter([
+    'batch_id' => $batchFilter > 0 ? $batchFilter : null,
+    'search'   => $searchFilter !== '' ? $searchFilter : null,
+    'district' => $districtFilter !== '' ? $districtFilter : null,
+    'town'     => $townFilter !== '' ? $townFilter : null,
+    'dealer'   => $dealerFilter !== '' ? $dealerFilter : null,
+], fn($v) => $v !== null);
+$exportUrl = '/api/export_entries.php' . ($exportParams ? '?' . http_build_query($exportParams) : '');
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -39,6 +79,7 @@ try {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Entries | Welloo Bonanza Admin</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; }
         body { background: #0F0F0F; color: #FFF; padding: 20px; }
@@ -51,6 +92,20 @@ try {
         .btn-danger { background: #FF3333; color: #FFF; }
         .btn-small { padding: 6px 10px; font-size: 11px; }
         select.batch-filter { background: #141414; border: 1px solid #333; color: #FFF; padding: 9px 12px; border-radius: 6px; font-size: 13px; }
+
+        .toolbar { background: #1A1A1A; border: 1px solid #333; border-radius: 10px; padding: 16px; margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+        .toolbar input, .toolbar select { background: #141414; border: 1px solid #333; color: #FFF; padding: 9px 12px; border-radius: 6px; font-size: 13px; outline: none; }
+        .toolbar input:focus, .toolbar select:focus { border-color: #FF6600; }
+        .toolbar input#search-input { min-width: 220px; flex: 1 1 220px; }
+        .toolbar select { min-width: 150px; }
+
+        .stats-row { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 20px; }
+        .stat-card { background: #1A1A1A; border: 1px solid #333; border-radius: 10px; padding: 16px 20px; min-width: 160px; }
+        .stat-card .stat-label { color: #888; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+        .stat-card .stat-value { color: #FF9900; font-size: 26px; font-weight: 700; }
+        .chart-card { background: #1A1A1A; border: 1px solid #333; border-radius: 10px; padding: 16px 20px; flex: 1 1 320px; }
+        .chart-card .stat-label { color: #888; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; }
+        .chart-card .chart-wrap { position: relative; height: 220px; }
 
         table { width: 100%; border-collapse: collapse; background: #1A1A1A; border-radius: 10px; overflow: hidden; border: 1px solid #333; }
         th, td { padding: 11px 12px; text-align: left; font-size: 12.5px; border-bottom: 1px solid #2A2A2A; white-space: nowrap; }
@@ -94,19 +149,56 @@ try {
     <div class="header">
         <h1>Entries</h1>
         <div class="nav-links">
-            <form method="GET" style="display:flex; gap:8px;">
-                <select class="batch-filter" name="batch_id" onchange="this.form.submit()">
-                    <option value="0">All Batches</option>
-                    <?php foreach ($batchList as $b): ?>
-                        <option value="<?= (int) $b['id'] ?>" <?= $batchFilter === (int) $b['id'] ? 'selected' : '' ?>>
-                            <?= htmlspecialchars($b['batch_name']) ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
-            </form>
-            <a class="btn" href="/api/export_entries.php<?= $batchFilter > 0 ? '?batch_id=' . $batchFilter : '' ?>">Export to CSV</a>
+            <a class="btn" id="export-btn" href="<?= htmlspecialchars($exportUrl) ?>">Export to CSV</a>
         </div>
     </div>
+
+    <div class="stats-row">
+        <div class="stat-card">
+            <div class="stat-label">Today's Entries</div>
+            <div class="stat-value" id="today-count">—</div>
+        </div>
+        <div class="chart-card">
+            <div class="stat-label">New Entries Trend</div>
+            <div class="chart-wrap"><canvas id="trend-chart"></canvas></div>
+        </div>
+    </div>
+
+    <form id="filter-form" method="GET" class="toolbar">
+        <input type="text" id="search-input" name="search" placeholder="Search by name or phone…" value="<?= htmlspecialchars($searchFilter) ?>">
+
+        <select class="batch-filter" name="batch_id" onchange="document.getElementById('filter-form').submit()">
+            <option value="0">All Batches</option>
+            <?php foreach ($batchList as $b): ?>
+                <option value="<?= (int) $b['id'] ?>" <?= $batchFilter === (int) $b['id'] ? 'selected' : '' ?>>
+                    <?= htmlspecialchars($b['batch_name']) ?>
+                </option>
+            <?php endforeach; ?>
+        </select>
+
+        <select name="district" onchange="document.getElementById('filter-form').submit()">
+            <option value="">All Districts</option>
+            <?php foreach ($districtOptions as $d): ?>
+                <option value="<?= htmlspecialchars($d) ?>" <?= $districtFilter === $d ? 'selected' : '' ?>><?= htmlspecialchars($d) ?></option>
+            <?php endforeach; ?>
+        </select>
+
+        <select name="town" onchange="document.getElementById('filter-form').submit()">
+            <option value="">All Cities/Towns</option>
+            <?php foreach ($townOptions as $t): ?>
+                <option value="<?= htmlspecialchars($t) ?>" <?= $townFilter === $t ? 'selected' : '' ?>><?= htmlspecialchars($t) ?></option>
+            <?php endforeach; ?>
+        </select>
+
+        <select name="dealer" onchange="document.getElementById('filter-form').submit()">
+            <option value="">All Dealers</option>
+            <?php foreach ($dealerOptions as $d): ?>
+                <option value="<?= htmlspecialchars($d) ?>" <?= $dealerFilter === $d ? 'selected' : '' ?>><?= htmlspecialchars($d) ?></option>
+            <?php endforeach; ?>
+        </select>
+
+        <button type="button" class="btn btn-secondary btn-small" onclick="window.location.href='entries.php'">Clear Filters</button>
+    </form>
 
     <?php if ($loadError): ?>
         <div class="load-error"><?= htmlspecialchars($loadError) ?></div>
@@ -360,5 +452,59 @@ try {
     });
 </script>
 <?php endif; ?>
+
+<script>
+    /* ---------- Live search (debounced) ---------- */
+    const searchInput = document.getElementById('search-input');
+    let searchDebounce = null;
+    searchInput.addEventListener('input', function () {
+        clearTimeout(searchDebounce);
+        searchDebounce = setTimeout(() => document.getElementById('filter-form').submit(), 500);
+    });
+
+    /* ---------- Analytics: today's count + trend chart ---------- */
+    (async function loadEntryStats() {
+        const batchId = <?= $batchFilter > 0 ? $batchFilter : 0 ?>;
+        const url = '/api/get_entry_stats.php' + (batchId > 0 ? `?batch_id=${batchId}` : '');
+
+        try {
+            const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+            const data = await res.json();
+            if (data.status !== 'success') return;
+
+            document.getElementById('today-count').innerText = data.today_count;
+
+            const labels = data.trend.map(row => row.date);
+            const counts = data.trend.map(row => row.count);
+
+            new Chart(document.getElementById('trend-chart'), {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Entries',
+                        data: counts,
+                        borderColor: '#FF6600',
+                        backgroundColor: 'rgba(255, 102, 0, 0.15)',
+                        tension: 0.3,
+                        fill: true,
+                        pointRadius: 3,
+                    }],
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { ticks: { color: '#888' }, grid: { color: '#2A2A2A' } },
+                        y: { beginAtZero: true, ticks: { color: '#888', precision: 0 }, grid: { color: '#2A2A2A' } },
+                    },
+                },
+            });
+        } catch (err) {
+            document.getElementById('today-count').innerText = '—';
+        }
+    })();
+</script>
 </body>
 </html>

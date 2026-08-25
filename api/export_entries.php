@@ -1,19 +1,45 @@
 <?php
-// api/export_entries.php — CSV export of entries, optionally filtered by batch
+// api/export_entries.php — CSV export of entries, respecting active filters
 require_once __DIR__ . '/../includes/auth.php';
 
 check_access(['admin']);
 
-$batchId = (int) ($_GET['batch_id'] ?? 0);
+$batchId  = (int) ($_GET['batch_id'] ?? 0);
+$search   = trim($_GET['search'] ?? '');
+$district = trim($_GET['district'] ?? '');
+$town     = trim($_GET['town'] ?? '');
+$dealer   = trim($_GET['dealer'] ?? '');
 
 $sql = "SELECT e.id, e.name, e.phone, e.district, e.town, e.dealer,
                e.language, b.batch_name, e.is_winner, e.verification_status, e.created_at
         FROM bonanza_entries e
         LEFT JOIN draw_batches b ON b.id = e.batch_id";
+$where = [];
 $params = [];
+
 if ($batchId > 0) {
-    $sql .= " WHERE e.batch_id = :batch_id";
+    $where[] = "e.batch_id = :batch_id";
     $params[':batch_id'] = $batchId;
+}
+if ($search !== '') {
+    $where[] = "(e.name LIKE :search OR e.phone LIKE :search)";
+    $params[':search'] = '%' . $search . '%';
+}
+if ($district !== '') {
+    $where[] = "e.district = :district";
+    $params[':district'] = $district;
+}
+if ($town !== '') {
+    $where[] = "e.town = :town";
+    $params[':town'] = $town;
+}
+if ($dealer !== '') {
+    $where[] = "e.dealer = :dealer";
+    $params[':dealer'] = $dealer;
+}
+
+if ($where) {
+    $sql .= " WHERE " . implode(' AND ', $where);
 }
 $sql .= " ORDER BY e.id DESC";
 
