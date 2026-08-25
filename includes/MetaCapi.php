@@ -53,6 +53,9 @@ class MetaCapi
         }
 
         $payload = ['data' => [$event]];
+        if (defined('META_TEST_EVENT_CODE') && !empty(META_TEST_EVENT_CODE)) {
+            $payload['test_event_code'] = META_TEST_EVENT_CODE;
+        }
         $url = 'https://graph.facebook.com/' . META_API_VERSION . '/' . META_PIXEL_ID
              . '/events?access_token=' . urlencode(META_ACCESS_TOKEN);
 
