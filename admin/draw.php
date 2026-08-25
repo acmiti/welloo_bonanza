@@ -156,7 +156,7 @@ $batches = $stmt->fetchAll();
     <div class="winner-modal-box">
         <div class="emoji">🎉</div>
         <h2 id="winner-modal-name">Winner Name</h2>
-        <div class="winner-meta" id="winner-modal-meta">Phone · District · Batch</div>
+        <div class="winner-meta" id="winner-modal-meta">District · Town · Dealer</div>
         <div class="winner-choice-actions">
             <button class="btn-remove" id="btn-remove-winner">Remove from List &amp; Record Winner</button>
             <button class="btn-keep" id="btn-keep-winner">Allow Re-entry &amp; Re-spin</button>
@@ -457,7 +457,7 @@ $batches = $stmt->fetchAll();
         fireConfetti();
 
         document.getElementById('winner-modal-name').innerText = winner.name;
-        document.getElementById('winner-modal-meta').innerText = `${winner.phone} · ${winner.district} · ${winner.batch_name}`;
+        document.getElementById('winner-modal-meta').innerText = `${winner.district} · ${winner.town} · ${winner.dealer}`;
         document.getElementById('winnerModal').classList.add('open');
     }
 
