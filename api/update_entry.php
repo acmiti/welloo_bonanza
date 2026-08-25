@@ -21,11 +21,18 @@ $district = trim($body['district'] ?? '');
 $town     = trim($body['town'] ?? '');
 $dealer   = trim($body['dealer'] ?? '');
 $language = strtoupper(trim($body['language'] ?? ''));
-$isWinner = (int) ($body['is_winner'] ?? 0) === 1 ? 1 : 0;
+$isWinner   = (int) ($body['is_winner'] ?? 0) === 1 ? 1 : 0;
+$multiplier = (int) ($body['multiplier'] ?? 1);
 
 if ($id <= 0 || $name === '' || $phone === '' || $district === '' || $town === '' || $dealer === '') {
     http_response_code(400);
     echo json_encode(['status' => 'error', 'message' => 'Name, phone, district, town, and dealer are required']);
+    exit;
+}
+
+if ($multiplier < 1 || $multiplier > 100) {
+    http_response_code(400);
+    echo json_encode(['status' => 'error', 'message' => 'Multiplier must be an integer between 1 and 100']);
     exit;
 }
 
@@ -52,18 +59,19 @@ if (!$existsStmt->fetch()) {
 $stmt = $pdo->prepare(
     "UPDATE bonanza_entries
      SET name = :name, phone = :phone, district = :district, town = :town, dealer = :dealer,
-         language = :language, is_winner = :is_winner
+         language = :language, is_winner = :is_winner, multiplier = :multiplier
      WHERE id = :id"
 );
 $stmt->execute([
-    ':name'      => $name,
-    ':phone'     => $phone,
-    ':district'  => $district,
-    ':town'      => $town,
-    ':dealer'    => $dealer,
-    ':language'  => $language,
-    ':is_winner' => $isWinner,
-    ':id'        => $id,
+    ':name'       => $name,
+    ':phone'      => $phone,
+    ':district'   => $district,
+    ':town'       => $town,
+    ':dealer'     => $dealer,
+    ':language'   => $language,
+    ':is_winner'  => $isWinner,
+    ':multiplier' => $multiplier,
+    ':id'         => $id,
 ]);
 
 echo json_encode(['status' => 'success', 'message' => 'Entry updated']);

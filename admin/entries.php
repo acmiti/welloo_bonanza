@@ -54,7 +54,7 @@ try {
     $dealerOptions = $dealerOptionsStmt->fetchAll(PDO::FETCH_COLUMN);
 
     $sql = "SELECT e.id, e.name, e.phone, e.district, e.town, e.dealer,
-                   e.language, e.is_winner, e.batch_id, e.created_at, b.batch_name
+                   e.language, e.is_winner, e.multiplier, e.batch_id, e.created_at, b.batch_name
             FROM bonanza_entries e
             LEFT JOIN draw_batches b ON b.id = e.batch_id";
     $where = [];
@@ -321,7 +321,11 @@ $exportUrl = '/api/export_entries.php' . ($exportParams ? '?' . http_build_query
                         <td><?= htmlspecialchars($e['district']) ?></td>
                         <td><?= htmlspecialchars($e['town']) ?></td>
                         <td><?= htmlspecialchars($e['dealer']) ?></td>
-                        <td><span class="badge badge-lang"><?= htmlspecialchars($e['language']) ?></span></td>
+                        <td><span class="badge badge-lang"><?= htmlspecialchars($e['language']) ?></span>
+                            <?php if ((int) ($e['multiplier'] ?? 1) > 1): ?>
+                                <span class="badge" style="background:#3a2d00; color:#ffcf40; border:1px solid #665200;"><?= (int) $e['multiplier'] ?>x</span>
+                            <?php endif; ?>
+                        </td>
                         <td><?= $e['is_winner'] ? '<span class="badge badge-winner">Winner</span>' : '<span class="muted">—</span>' ?></td>
                         <td><?= htmlspecialchars($e['batch_name'] ?? '—') ?></td>
                         <td><?= date('M d, Y H:i', strtotime($e['created_at'])) ?></td>
@@ -336,6 +340,7 @@ $exportUrl = '/api/export_entries.php' . ($exportParams ? '?' . http_build_query
                                     "dealer" => $e["dealer"],
                                     "language" => $e["language"],
                                     "is_winner" => (int) $e["is_winner"],
+                                    "multiplier" => (int) ($e["multiplier"] ?? 1),
                                 ]) ?>)'>Edit</button>
                                 <button class="del-btn" onclick="openDeleteModal([<?= (int) $e['id'] ?>])">Delete</button>
                             </td>
@@ -401,6 +406,10 @@ $exportUrl = '/api/export_entries.php' . ($exportParams ? '?' . http_build_query
                         <option value="1">Winner</option>
                     </select>
                 </div>
+            </div>
+            <div class="form-group">
+                <label>Winning Chance Multiplier (1–100)</label>
+                <input type="number" id="edit-multiplier" min="1" max="100" value="1" required>
             </div>
             <div class="modal-actions">
                 <button type="button" class="btn btn-secondary" onclick="closeModal('editModal')">Cancel</button>
@@ -529,6 +538,7 @@ $exportUrl = '/api/export_entries.php' . ($exportParams ? '?' . http_build_query
         document.getElementById('edit-dealer').value = entry.dealer || '';
         document.getElementById('edit-language').value = entry.language || 'EN';
         document.getElementById('edit-is-winner').value = entry.is_winner ? '1' : '0';
+        document.getElementById('edit-multiplier').value = entry.multiplier || 1;
         document.getElementById('editModal').classList.add('open');
     }
 
@@ -545,7 +555,8 @@ $exportUrl = '/api/export_entries.php' . ($exportParams ? '?' . http_build_query
             town: document.getElementById('edit-town').value.trim(),
             dealer: document.getElementById('edit-dealer').value.trim(),
             language: document.getElementById('edit-language').value,
-            is_winner: document.getElementById('edit-is-winner').value
+            is_winner: document.getElementById('edit-is-winner').value,
+            multiplier: parseInt(document.getElementById('edit-multiplier').value, 10)
         });
 
         if (!ok) {
