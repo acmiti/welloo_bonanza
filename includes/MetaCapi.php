@@ -72,12 +72,37 @@ class MetaCapi
         $curlError = curl_error($ch);
         curl_close($ch);
 
+        self::logResponse($eventName, $httpCode, $response, $curlError);
+
         $ok = $response !== false && $httpCode < 400;
         if (!$ok) {
             error_log("MetaCapi: failed to send '{$eventName}' event (HTTP {$httpCode}): {$curlError} {$response}");
         }
 
         return $ok;
+    }
+
+    private static function logResponse(string $eventName, int $httpCode, $response, string $curlError): void
+    {
+        $logDir = __DIR__ . '/../logs';
+        if (!is_dir($logDir)) {
+            @mkdir($logDir, 0775, true);
+        }
+        if (!is_dir($logDir) || !is_writable($logDir)) {
+            return;
+        }
+
+        $line = sprintf(
+            "[%s] event=%s status=%s curl_error=%s body=%s%s",
+            date('Y-m-d H:i:s'),
+            $eventName,
+            $httpCode,
+            $curlError !== '' ? $curlError : 'none',
+            $response === false ? '(request failed)' : $response,
+            PHP_EOL
+        );
+
+        @file_put_contents($logDir . '/capi.log', $line, FILE_APPEND | LOCK_EX);
     }
 
     private static function hash(string $value): string
