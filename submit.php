@@ -112,6 +112,10 @@ try {
     MetaCapi::sendEvent('Lead', $capiUserData, $capiCustomData);
     MetaCapi::sendEvent('CompleteRegistration', $capiUserData, $capiCustomData);
 
+    // A successful submission always redirects the user to a WhatsApp API link
+    // (see handleFormSubmit in index.html), so fire a Contact event to match.
+    MetaCapi::sendEvent('Contact', $capiUserData, ['action' => 'whatsapp_redirect', 'destination' => 'whatsapp']);
+
     echo json_encode([
         'status'        => 'success',
         'message'       => 'Entry recorded successfully',
