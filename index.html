@@ -141,7 +141,7 @@
 
     <div class="entry-closed-banner" id="entry-closed-banner" style="display:none;"></div>
 
-    <form id="regForm" onsubmit="handleFormSubmit(event)">
+    <form id="regForm" action="submit.php" method="post" onsubmit="handleFormSubmit(event)">
         <input type="hidden" name="lang" id="selected-lang" value="SI">
         
         <div class="form-group">
@@ -329,32 +329,6 @@
             entriesClosed: "Entries for {batch} are now closed. Submissions will automatically qualify for the next draw!",
             deadlineLabel: "Deadline:"
         }
-    };
-
-    const waTemplates = {
-        si: (d) => `ආයුබෝවන් Welloo Sri Lanka,%0A%0Aමම 'Always Dinum Bonanza' සඳහා ලියාපදිංචි වීමට කැමැත්තෙමි.%0A` +
-                  `*නම:* ${d.name}%0A` +
-                  `*දුරකථන අංකය:* ${d.phone}%0A` +
-                  `*දිස්ත්‍රික්කය:* ${d.district}%0A` +
-                  `*නගරය/ගම:* ${d.town}%0A` +
-                  `*මිලදී ගන්නා වෙළඳසැල:* ${d.dealer}%0A` +
-                  `*භාෂාව:* Sinhala`,
-        
-        ta: (d) => `வணக்கம் Welloo Sri Lanka,%0A%0Aநான் 'Always Dinum Bonanza' போட்டியில் பதிவு செய்ய விரும்புகிறேன்.%0A` +
-                  `*பெயர்:* ${d.name}%0A` +
-                  `*தொலைபேசி எண்:* ${d.phone}%0A` +
-                  `*மாவட்டம்:* ${d.district}%0A` +
-                  `*நகரம்/ஊர்:* ${d.town}%0A` +
-                  `*வாங்கும் கடை:* ${d.dealer}%0A` +
-                  `*மொழி:* Tamil`,
-        
-        en: (d) => `Hi Welloo Sri Lanka,%0A%0AI would like to register for the 'Always Dinum Bonanza'!%0A` +
-                  `*Name:* ${d.name}%0A` +
-                  `*Phone:* ${d.phone}%0A` +
-                  `*District:* ${d.district}%0A` +
-                  `*City/Town:* ${d.town}%0A` +
-                  `*Power Tools Shop:* ${d.dealer}%0A` +
-                  `*Language:* English`
     };
 
     const socialEntries = [
@@ -650,39 +624,10 @@
         const overlay = document.getElementById('overlay');
         overlay.classList.add('active');
 
-        // Post entry to submit.php asynchronously
-        fetch('submit.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                name: name,
-                phone: phone,
-                district: district,
-                town: town,
-                dealer: dealer,
-                lang: currentLang.toUpperCase()
-            })
-        }).catch(err => console.error('Failed to log to database:', err));
-
-        // Build cross-platform WhatsApp URL
-        const formDataEncoded = {
-            name: encodeURIComponent(name),
-            phone: encodeURIComponent(phone),
-            district: encodeURIComponent(district),
-            town: encodeURIComponent(town),
-            dealer: encodeURIComponent(dealer)
-        };
-
-        const waMessage = waTemplates[currentLang](formDataEncoded);
-        const targetPhone = "94777886966";
-        const waUrl = `https://api.whatsapp.com/send/?phone=${targetPhone}&text=${waMessage}`;
-
-        // Trigger direct page navigation with fallback link
-        setTimeout(() => {
-            const overlayMsg = document.getElementById('overlay-msg');
-            overlayMsg.innerHTML = `${translations[currentLang].overlayMsg}<br><br><a href="${waUrl}" class="fallback-btn">Click here if WhatsApp doesn't open</a>`;
-            window.location.href = waUrl;
-        }, 1200);
+        // Hand off to submit.php via a normal POST navigation. It records the
+        // entry, fires the Meta CAPI events, and renders the confirmation page
+        // that redirects the visitor to WhatsApp.
+        document.getElementById('regForm').submit();
     }
 </script>
 </body>
