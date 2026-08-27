@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="si">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -120,6 +120,12 @@
     <div class="winner-banner" id="top-banner">🏆 EVERYONE IS A WINNER! | 100% GUARANTEED</div>
     <div class="weekly-prize-hook" id="sub-banner">Win a Welloo Grinder Every Week + More!</div>
 
+    <div class="lang-picker">
+        <button class="lang-btn" onclick="setLang('si', this)">සිංහල</button>
+        <button class="lang-btn" onclick="setLang('ta', this)">தமிழ்</button>
+        <button class="lang-btn active" onclick="setLang('en', this)">English</button>
+    </div>
+
     <div class="timer-container">
         <div class="timer-title" id="timer-label">ඊළඟ නොමිලේ Grinder ජයග්‍රාහකයා තේරීමට තව:</div>
         <div class="timer-box">
@@ -132,17 +138,11 @@
     </div>
 
     <img src="welloo-always-dinum-logo.webp" alt="Welloo Always Dinum Bonanza" class="logo">
-    
-    <div class="lang-picker">
-        <button class="lang-btn active" onclick="setLang('si', this)">සිංහල</button>
-        <button class="lang-btn" onclick="setLang('ta', this)">தமிழ்</button>
-        <button class="lang-btn" onclick="setLang('en', this)">English</button>
-    </div>
 
     <div class="entry-closed-banner" id="entry-closed-banner" style="display:none;"></div>
 
     <form id="regForm" action="submit.php" method="post" onsubmit="handleFormSubmit(event)">
-        <input type="hidden" name="lang" id="selected-lang" value="SI">
+        <input type="hidden" name="lang" id="selected-lang" value="EN">
         
         <div class="form-group">
             <label id="lbl-name">ඔබේ නම (Full Name)</label>
@@ -228,11 +228,36 @@
 </div>
 
 <script>
-    let currentLang = 'si';
+    const SUPPORTED_LANGS = ['en', 'si', 'ta'];
+    const DEFAULT_LANG = 'en';
+    let currentLang = DEFAULT_LANG;
+
+    function setCookie(name, value, days) {
+        const maxAge = days * 24 * 60 * 60;
+        document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=${maxAge}; SameSite=Lax`;
+    }
+
+    // Resolve the active language: an explicit ?lang= URL parameter wins and is
+    // persisted; otherwise fall back to a previously stored choice, then default.
+    function resolveInitialLang() {
+        const param = new URLSearchParams(window.location.search).get('lang');
+        if (param && SUPPORTED_LANGS.includes(param.toLowerCase())) {
+            const lang = param.toLowerCase();
+            setCookie('lang', lang, 365);
+            return lang;
+        }
+        const stored = getCookie('lang');
+        if (stored && SUPPORTED_LANGS.includes(stored.toLowerCase())) {
+            return stored.toLowerCase();
+        }
+        return DEFAULT_LANG;
+    }
 
     document.addEventListener("DOMContentLoaded", function () {
         document.getElementById('year').innerText = new Date().getFullYear();
-        setLang(currentLang, document.querySelector('.lang-btn.active'));
+        currentLang = resolveInitialLang();
+        const langBtn = document.querySelector(`.lang-btn[onclick*="setLang('${currentLang}'"]`);
+        setLang(currentLang, langBtn);
         fetchCurrentBatch();
         setInterval(fetchCurrentBatch, 60000);
         startSocialProofLoop();
@@ -394,6 +419,9 @@
 
     function setLang(lang, el) {
         currentLang = lang;
+        if (typeof SUPPORTED_LANGS !== 'undefined' && SUPPORTED_LANGS.includes(lang)) {
+            setCookie('lang', lang, 365);
+        }
         document.querySelectorAll('.lang-btn').forEach(btn => btn.classList.remove('active'));
         if (el) el.classList.add('active');
         
