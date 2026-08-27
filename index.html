@@ -111,6 +111,16 @@
         .modal-actions { display: flex; justify-content: flex-end; align-items: center; gap: 10px; margin-top: 16px; }
         .modal-link-btn { color: #FF9900; text-decoration: underline; font-weight: bold; font-size: 12px; cursor: pointer; }
         .modal-close { background: #FF6600; color: #000; border: none; font-weight: bold; padding: 8px 16px; border-radius: 6px; cursor: pointer; }
+
+        .exit-modal-content { text-align: center; position: relative; border-color: #FF6600; box-shadow: 0 0 30px rgba(255,102,0,0.35); }
+        .exit-modal-content h3 { font-size: 20px; font-weight: 900; text-transform: uppercase; margin-bottom: 12px; color: #FF9900; }
+        #exit-subheadline { font-size: 14px; color: #DDD; line-height: 1.5; margin-bottom: 18px; }
+        #exit-subheadline .exit-timer { color: #FF6600; font-weight: 900; white-space: nowrap; }
+        .exit-modal-content .cta-btn { width: 100%; margin-top: 0; }
+        .exit-secondary { display: block; margin-top: 14px; color: #888; font-size: 12px; text-decoration: underline; cursor: pointer; line-height: 1.4; }
+        .exit-secondary:hover { color: #AAA; }
+        .exit-modal-x { position: absolute; top: 8px; right: 12px; background: none; border: none; color: #888; font-size: 22px; line-height: 1; cursor: pointer; }
+        .exit-modal-x:hover { color: #FFF; }
     </style>
 </head>
 <body>
@@ -227,6 +237,16 @@
     </div>
 </div>
 
+<div class="modal" id="exit-modal">
+    <div class="modal-content exit-modal-content">
+        <button class="exit-modal-x" aria-label="Close" onclick="closeExitModal()">&times;</button>
+        <h3 id="exit-headline"></h3>
+        <p id="exit-subheadline"></p>
+        <button type="button" class="cta-btn" id="exit-primary" onclick="exitPrimaryAction()"></button>
+        <a class="exit-secondary" id="exit-secondary" onclick="closeExitModal()"></a>
+    </div>
+</div>
+
 <script>
     const SUPPORTED_LANGS = ['en', 'si', 'ta'];
     const DEFAULT_LANG = 'en';
@@ -263,6 +283,7 @@
         fetchRecentEntries();
         startSocialProofLoop();
         trackPageView();
+        initExitIntent();
     });
 
     function escapeHtml(value) {
@@ -328,7 +349,11 @@
             modalOk: "හරි",
             modalReadFull: "කොන්දේසි සම්පුර්ණයෙන් කියවන්න",
             entriesClosed: "{batch} සඳහා ප්‍රවේශයන් දැන් වසා ඇත. ඉදිරිපත් කිරීම් ස්වයංක්‍රීයව ඊළඟ දිනුම් ඇදීමට සුදුසුකම් ලබනු ඇත!",
-            deadlineLabel: "අවසාන දිනය:"
+            deadlineLabel: "අවසාන දිනය:",
+            exitHeadline: "පොඩ්ඩක් ඉන්න! අවස්ථාව මඟහැර ගන්න එපා!",
+            exitSubheadline: "ඊළඟ ජයග්‍රාහකයා තේරීමට තව <span class='exit-timer'>[දින:පැය:මිනිත්තු:තත්පර]</span> යි. අවස්ථාව මඟහැරෙන්න කලින් දැන්ම එකතු වන්න!",
+            exitPrimary: "නොමිලේ ඇතුළත් වන්න",
+            exitSecondary: "කමක් නෑ, මම මාස 12 ක වගකීමක් සහිත Welloo මෙවලම් මිලදී ගන්නම්"
         },
         ta: {
             topBanner: "🏆 அனைவருக்கும் வெற்றி! | EVERYONE IS A WINNER",
@@ -352,7 +377,11 @@
             modalOk: "சரி",
             modalReadFull: "முழு விதிமுறைகளைப் படிக்க",
             entriesClosed: "{batch} க்கான பதிவுகள் இப்போது மூடப்பட்டுள்ளன. சமர்ப்பிப்புகள் தானாகவே அடுத்த குலுக்கலுக்கு தகுதி பெறும்!",
-            deadlineLabel: "காலக்கெடு:"
+            deadlineLabel: "காலக்கெடு:",
+            exitHeadline: "நில்லுங்கள்! வாய்ப்பை தவறவிடாதீர்கள்!",
+            exitSubheadline: "அடுத்த வெற்றியாளர் <span class='exit-timer'>[நாட்கள்:மணி:நிமிட:விநாடி]</span> இல் தேர்ந்தெடுக்கப்படுவார். வாய்ப்பு முடிவதற்குள் இப்பொழுதே பெறுங்கள்!",
+            exitPrimary: "இலவசமாக பதிவு செய்",
+            exitSecondary: "பரவாயில்லை, நான் 12 மாத உத்தரவாதத்துடன் கூடிய Welloo கருவிகளை வாங்குவேன்"
         },
         en: {
             topBanner: "🏆 EVERYONE IS A WINNER! | 100% GUARANTEED",
@@ -376,7 +405,11 @@
             modalOk: "OK",
             modalReadFull: "Read Full Terms",
             entriesClosed: "Entries for {batch} are now closed. Submissions will automatically qualify for the next draw!",
-            deadlineLabel: "Deadline:"
+            deadlineLabel: "Deadline:",
+            exitHeadline: "Wait! Don't Miss Out!",
+            exitSubheadline: "Next winner selected in <span class='exit-timer'>[DD:HH:MM:SS]</span>. Grab your entry before it's gone!",
+            exitPrimary: "Claim Free Entry Now",
+            exitSecondary: "No thanks, I'll just buy Welloo tools with a 12-month warranty"
         }
     };
 
@@ -475,6 +508,12 @@
         document.getElementById('modal-read-full').innerText = translations[lang].modalReadFull;
         document.getElementById('modal-read-full').href = `terms.html?lang=${lang}`;
 
+        document.getElementById('exit-headline').innerText = translations[lang].exitHeadline;
+        document.getElementById('exit-subheadline').innerHTML = translations[lang].exitSubheadline;
+        document.getElementById('exit-primary').innerText = translations[lang].exitPrimary;
+        document.getElementById('exit-secondary').innerText = translations[lang].exitSecondary;
+        updateExitTimerDisplay();
+
         updateDistrictDropdown(lang);
         renderClosedBanner();
         renderDeadlineSubtitle();
@@ -483,6 +522,8 @@
     let currentBatch = null;
     let countdownIntervalId = null;
     let formLocked = false;
+    let formSubmitted = false;
+    let lastCountdownParts = null;
 
     // MySQL DATETIME ("YYYY-MM-DD HH:MM:SS") isn't reliably parsed as local time
     // by Date() across browsers unless it's reshaped into an ISO-like string first.
@@ -548,6 +589,8 @@
                 document.getElementById('d-hours').innerText = '00';
                 document.getElementById('d-mins').innerText = '00';
                 document.getElementById('d-secs').innerText = '00';
+                lastCountdownParts = { d: '00', h: '00', m: '00', s: '00' };
+                updateExitTimerDisplay();
                 lockEntryForm();
                 return;
             }
@@ -561,6 +604,14 @@
             document.getElementById('d-hours').innerText = String(hours).padStart(2, '0');
             document.getElementById('d-mins').innerText = String(mins).padStart(2, '0');
             document.getElementById('d-secs').innerText = String(secs).padStart(2, '0');
+
+            lastCountdownParts = {
+                d: String(days).padStart(2, '0'),
+                h: String(hours).padStart(2, '0'),
+                m: String(mins).padStart(2, '0'),
+                s: String(secs).padStart(2, '0')
+            };
+            updateExitTimerDisplay();
         }
 
         updateTimer();
@@ -656,6 +707,66 @@
         }, 2500);
     }
 
+    // ----- Exit-intent pop-up -----
+    const EXIT_FLAG = 'welloo_exit_shown';
+    let exitModalArmed = true;
+
+    function updateExitTimerDisplay() {
+        const text = lastCountdownParts
+            ? `${lastCountdownParts.d}:${lastCountdownParts.h}:${lastCountdownParts.m}:${lastCountdownParts.s}`
+            : '00:00:00:00';
+        document.querySelectorAll('.exit-timer').forEach(el => { el.innerText = text; });
+    }
+
+    function hasSubmittedForm() {
+        return formSubmitted || document.getElementById('overlay').classList.contains('active');
+    }
+
+    function canShowExitModal() {
+        if (!exitModalArmed) return false;
+        try { if (sessionStorage.getItem(EXIT_FLAG)) return false; } catch (e) {}
+        if (hasSubmittedForm()) return false;
+        return true;
+    }
+
+    function showExitModal() {
+        if (!canShowExitModal()) return;
+        exitModalArmed = false;
+        try { sessionStorage.setItem(EXIT_FLAG, '1'); } catch (e) {}
+        updateExitTimerDisplay();
+        document.getElementById('exit-modal').classList.add('modal-open');
+    }
+
+    function closeExitModal() {
+        document.getElementById('exit-modal').classList.remove('modal-open');
+    }
+
+    function exitPrimaryAction() {
+        closeExitModal();
+        const nameField = document.getElementById('name');
+        nameField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setTimeout(() => {
+            try { nameField.focus({ preventScroll: true }); } catch (e) { nameField.focus(); }
+        }, 450);
+    }
+
+    function initExitIntent() {
+        // Desktop: mouse leaves the top viewport boundary.
+        document.addEventListener('mouseleave', function (e) {
+            if (e.clientY <= 0) showExitModal();
+        });
+
+        // Mobile + desktop: intercept back navigation so the back button opens
+        // the exit modal instead of leaving the page.
+        history.pushState(null, '', window.location.href);
+        window.addEventListener('popstate', function () {
+            if (canShowExitModal()) {
+                showExitModal();
+                history.pushState(null, '', window.location.href);
+            }
+        });
+    }
+
     function handleFormSubmit(e) {
         e.preventDefault();
         let isValid = true;
@@ -681,6 +792,8 @@
             triggerShake();
             return false;
         }
+
+        formSubmitted = true;
 
         const overlay = document.getElementById('overlay');
         overlay.classList.add('active');
