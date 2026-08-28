@@ -12,6 +12,11 @@
     const spinCounts = {};
     let audioCtx = null;
 
+    // Central hub live tracker state
+    let hubEntry = null;      // entry currently under the top pointer
+    let hubLocked = false;    // true once the wheel stops on the winner
+    let hubGlow = 0;          // 0..1 pulse intensity for the winner-lock highlight
+
     /* ---------- utils ---------- */
 
     function escapeHtml(str) {
@@ -102,26 +107,131 @@
 
         ctx.restore();
 
-        // Hub
-        ctx.beginPath();
-        ctx.arc(cx, cy, 20, 0, Math.PI * 2);
-        ctx.fillStyle = '#0F0F0F';
-        ctx.fill();
-        ctx.strokeStyle = '#FF6600';
-        ctx.lineWidth = 3;
-        ctx.stroke();
+        // Central hub live tracker — keep it synced to whatever slice is under the pointer
+        if (!hubLocked) {
+            const idx = sliceIndexAtPointer(pool.length, rotation);
+            hubEntry = pool[idx] || null;
+        }
+        drawHub(ctx, cx, cy, radius, hubEntry);
 
-        // Fixed pointer at top, pointing down
+        // Fixed pointer at top, pointing down — scales with the canvas
+        const k = size / 340;
         ctx.beginPath();
-        ctx.moveTo(cx - 14, 2);
-        ctx.lineTo(cx + 14, 2);
-        ctx.lineTo(cx, 30);
+        ctx.moveTo(cx - 14 * k, 2 * k);
+        ctx.lineTo(cx + 14 * k, 2 * k);
+        ctx.lineTo(cx, 30 * k);
         ctx.closePath();
         ctx.fillStyle = '#FF9900';
         ctx.fill();
         ctx.strokeStyle = '#0F0F0F';
-        ctx.lineWidth = 1.5;
+        ctx.lineWidth = 1.5 * k;
         ctx.stroke();
+    }
+
+    /* ---------- keep the canvas backing store matched to its displayed size ---------- */
+
+    function resizeCanvas() {
+        const canvas = document.getElementById('wheel-canvas');
+        if (!canvas) return;
+        const rect = canvas.getBoundingClientRect();
+        if (!rect.width) return;
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        const target = Math.max(240, Math.round(rect.width * dpr));
+        if (canvas.width !== target) {
+            canvas.width = target;
+            canvas.height = target;
+        }
+        drawWheel(currentPool, wheelRotation);
+    }
+
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeCanvas._t);
+        resizeCanvas._t = setTimeout(resizeCanvas, 120);
+    });
+
+    /* ---------- central hub: enlarged live digital display ---------- */
+
+    function roundRectPath(ctx, x, y, w, h, r) {
+        if (typeof ctx.roundRect === 'function') {
+            ctx.beginPath();
+            ctx.roundRect(x, y, w, h, r);
+            return;
+        }
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.arcTo(x + w, y, x + w, y + h, r);
+        ctx.arcTo(x + w, y + h, x, y + h, r);
+        ctx.arcTo(x, y + h, x, y, r);
+        ctx.arcTo(x, y, x + w, y, r);
+        ctx.closePath();
+    }
+
+    function fitText(ctx, text, maxWidth) {
+        if (ctx.measureText(text).width <= maxWidth) return text;
+        let t = text;
+        while (t.length > 1 && ctx.measureText(t + '…').width > maxWidth) {
+            t = t.slice(0, -1);
+        }
+        return t + '…';
+    }
+
+    function drawHub(ctx, cx, cy, radius, entry) {
+        const s = radius / 164; // scale factor relative to the 340px canvas
+        const w = radius * 1.28;
+        const h = radius * 0.62;
+        const x = cx - w / 2;
+        const y = cy - h / 2;
+        const pad = 14 * s;
+
+        ctx.save();
+
+        // Winner-lock glow
+        if (hubLocked && hubGlow > 0) {
+            ctx.shadowColor = 'rgba(255,153,0,' + (0.85 * hubGlow).toFixed(3) + ')';
+            ctx.shadowBlur = 34 * s * hubGlow;
+        }
+
+        roundRectPath(ctx, x, y, w, h, 12 * s);
+        ctx.fillStyle = 'rgba(8,8,8,0.86)';
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        ctx.lineWidth = (hubLocked ? 3 : 2) * s;
+        ctx.strokeStyle = hubLocked
+            ? 'rgba(255,153,0,' + (0.55 + 0.45 * hubGlow).toFixed(3) + ')'
+            : '#FF6600';
+        ctx.stroke();
+
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        const maxW = w - pad * 2;
+
+        if (!entry) {
+            ctx.fillStyle = '#888';
+            ctx.font = (13 * s).toFixed(1) + 'px Segoe UI, sans-serif';
+            ctx.fillText('—', cx, cy);
+            ctx.restore();
+            return;
+        }
+
+        // Line 1: entry number + name, bright orange, bold
+        ctx.fillStyle = hubLocked ? '#FFFFFF' : '#FF9900';
+        ctx.font = 'bold ' + (17 * s).toFixed(1) + 'px Segoe UI, sans-serif';
+        const idxLabel = (entry.entry_no || entry.id) ? '#' + (entry.entry_no || entry.id) + '  ' : '';
+        ctx.fillText(fitText(ctx, idxLabel + (entry.name || ''), maxW), cx, cy - h * 0.16);
+
+        // Line 2: town — district, crisp white
+        ctx.fillStyle = hubLocked ? '#FF9900' : '#FFFFFF';
+        ctx.font = (12.5 * s).toFixed(1) + 'px Segoe UI, sans-serif';
+        const loc = [entry.town, entry.district].filter(Boolean).join(' — ');
+        ctx.fillText(fitText(ctx, loc, maxW), cx, cy + h * 0.14);
+
+        if (hubLocked) {
+            ctx.fillStyle = 'rgba(255,153,0,' + (0.5 + 0.5 * hubGlow).toFixed(3) + ')';
+            ctx.font = 'bold ' + (9 * s).toFixed(1) + 'px Segoe UI, sans-serif';
+            ctx.fillText('★ WINNER ★', cx, cy + h * 0.34);
+        }
+
+        ctx.restore();
     }
 
     /* ---------- spin animation: 0-5s multi-revolution spin-up, 5-10s cubic ease-out ---------- */
@@ -225,6 +335,10 @@
 
         currentPool = data.pool;
         wheelRotation = 0;
+        hubLocked = false;
+        hubGlow = 0;
+        hubEntry = null;
+        resizeCanvas();
         drawWheel(currentPool, wheelRotation);
         window.DrawWheel.onPoolLoaded(currentPool);
     }
@@ -234,6 +348,8 @@
     async function spinWheel() {
         if (spinning || currentPool.length === 0) return;
         spinning = true;
+        hubLocked = false;
+        hubGlow = 0;
         window.DrawWheel.onSpinStart();
         getAudioCtx(); // unlock audio on this user gesture
 
@@ -288,16 +404,38 @@
                 requestAnimationFrame(frame);
             } else {
                 wheelRotation = targetRotation;
-                drawWheel(currentPool, wheelRotation);
                 playFanfare();
-                onSpinComplete(winner);
+                lockHubOnWinner(winner);
             }
         }
         requestAnimationFrame(frame);
     }
 
-    function onSpinComplete(winner) {
+    // Lock the central hub onto the winner and play a pulse/glow before the modal opens.
+    function lockHubOnWinner(winner) {
         spinning = false;
+        hubLocked = true;
+        hubEntry = winner;
+        const holdMs = 1100;
+        const t0 = performance.now();
+        function pulse(now) {
+            const elapsed = now - t0;
+            // two eased pulses over the hold window, settling near full glow
+            const cycle = Math.sin((elapsed / holdMs) * Math.PI * 2);
+            hubGlow = 0.55 + 0.45 * Math.abs(cycle);
+            drawWheel(currentPool, wheelRotation);
+            if (elapsed < holdMs) {
+                requestAnimationFrame(pulse);
+            } else {
+                hubGlow = 1;
+                drawWheel(currentPool, wheelRotation);
+                onSpinComplete(winner);
+            }
+        }
+        requestAnimationFrame(pulse);
+    }
+
+    function onSpinComplete(winner) {
         pendingWinner = winner;
         spinCounts[winner.id] = (spinCounts[winner.id] || 0) + 1;
 
@@ -332,10 +470,14 @@
             return;
         }
 
+        hubLocked = false;
+        hubGlow = 0;
+        hubEntry = null;
+
         if (action === 'remove') {
             currentPool = currentPool.filter(e => e.id !== winner.id);
-            drawWheel(currentPool, wheelRotation);
         }
+        drawWheel(currentPool, wheelRotation);
 
         window.DrawWheel.onWinnerResolved(winner, action, spinCounts[winner.id]);
 
@@ -363,5 +505,6 @@
         onError() {},
     };
 
+    resizeCanvas();
     drawWheel([], 0);
 })();

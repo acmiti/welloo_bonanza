@@ -18,7 +18,7 @@ $targetDealer   = trim((string) ($_GET['target_dealer'] ?? ''));
     <title>Live Draw | Welloo Bonanza</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; }
-        html, body { height: 100%; }
+        html, body { height: 100%; overflow-x: hidden; }
         body { background: #0F0F0F; color: #FFF; display: flex; align-items: center; justify-content: center; padding: 24px; }
 
         .stage { width: 100%; max-width: 520px; text-align: center; }
@@ -27,12 +27,20 @@ $targetDealer   = trim((string) ($_GET['target_dealer'] ?? ''));
         .pool-box { background: #1A1A1A; border: 1px solid #333; border-radius: 14px; padding: 28px; }
         #pool-count-label { color: #DDD; font-size: 13px; font-weight: 700; margin-bottom: 16px; }
 
-        .wheel-stage { position: relative; width: 420px; height: 420px; max-width: 100%; margin: 0 auto 24px; }
+        .wheel-stage { position: relative; width: 420px; max-width: 100%; aspect-ratio: 1 / 1; height: auto; margin: 0 auto 24px; }
         #wheel-canvas { display: block; width: 100%; height: 100%; border-radius: 50%; box-shadow: 0 0 0 6px #1A1A1A, 0 0 0 8px #FF6600, 0 10px 40px rgba(0,0,0,0.6); }
 
         .spin-actions { text-align: center; margin-top: 4px; }
         .btn-wheel { background: linear-gradient(180deg, #FF6600 0%, #D64F00 100%); color: #000; border: none; font-weight: bold; font-size: 18px; padding: 18px 34px; border-radius: 8px; text-transform: uppercase; cursor: pointer; box-shadow: 0 4px 20px rgba(255,102,0,0.4); }
         .btn-wheel:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        @media (max-width: 520px) {
+            body { padding: 14px; }
+            .pool-box { padding: 18px; }
+            .wheel-stage { width: 100%; margin-bottom: 18px; }
+            .spin-actions { display: flex; flex-direction: column; align-items: stretch; gap: 10px; }
+            .btn-wheel { width: 100%; font-size: 16px; padding: 16px 20px; }
+        }
 
         /* Winner modal */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: none; justify-content: center; align-items: center; z-index: 400; padding: 20px; }

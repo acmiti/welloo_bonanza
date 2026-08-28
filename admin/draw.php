@@ -26,6 +26,7 @@ $batches = $stmt->fetchAll();
     <title>Draw Manager | Welloo Bonanza Admin</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; }
+        html, body { overflow-x: hidden; }
         body { background: #0F0F0F; color: #FFF; padding: 20px; }
         .wrapper { max-width: 1150px; margin: 0 auto; }
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #222; }
@@ -59,10 +60,18 @@ $batches = $stmt->fetchAll();
         .pool-box { background: #1A1A1A; border: 1px solid #333; border-radius: 10px; padding: 22px; margin-top: 14px; }
         #pool-count-label { color: #DDD; font-size: 13px; font-weight: 700; margin-bottom: 14px; text-align: center; }
 
-        .wheel-stage { position: relative; width: 340px; height: 340px; margin: 0 auto 20px; }
+        .wheel-stage { position: relative; width: 340px; max-width: 100%; aspect-ratio: 1 / 1; height: auto; margin: 0 auto 20px; }
         #wheel-canvas { display: block; width: 100%; height: 100%; border-radius: 50%; box-shadow: 0 0 0 6px #1A1A1A, 0 0 0 8px #FF6600, 0 10px 40px rgba(0,0,0,0.6); }
 
-        .spin-actions { text-align: center; margin-top: 4px; display: flex; gap: 10px; justify-content: center; }
+        .spin-actions { text-align: center; margin-top: 4px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+
+        @media (max-width: 520px) {
+            body { padding: 12px; }
+            .wheel-stage { width: 100%; }
+            .pool-box { padding: 16px; }
+            .spin-actions { flex-direction: column; align-items: stretch; }
+            .spin-actions .btn { width: 100%; }
+        }
 
         /* Target criteria panel (admin-only pre-selection) */
         .criteria-box { background: #1A1A1A; border: 1px dashed #4DA6FF; border-radius: 10px; padding: 18px 22px; margin-top: 14px; }
