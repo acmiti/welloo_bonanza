@@ -136,7 +136,7 @@ $batches = $stmt->fetchAll();
             <tbody>
                 <?php foreach ($batches as $b): ?>
                     <tr>
-                        <td><input type="checkbox" class="batch-check" data-id="<?= (int) $b['id'] ?>" data-eligible="<?= (int) $b['eligible_entries'] ?>" onchange="updateSelectionSummary()"></td>
+                        <td><input type="checkbox" class="batch-check" data-id="<?= (int) $b['id'] ?>" data-eligible="<?= (int) $b['eligible_entries'] ?>" data-deadline="<?= htmlspecialchars($b['entry_deadline']) ?>" data-deadline-fmt="<?= htmlspecialchars(date('M j, Y \a\t g:i A', strtotime($b['entry_deadline']))) ?>" onchange="updateSelectionSummary()"></td>
                         <td><strong><?= htmlspecialchars($b['batch_name']) ?></strong></td>
                         <td><span class="badge badge-<?= $b['status'] ?>"><?= htmlspecialchars($b['status']) ?></span></td>
                         <td><?= date('M d, Y H:i', strtotime($b['draw_datetime'])) ?></td>
@@ -185,7 +185,7 @@ $batches = $stmt->fetchAll();
     <div id="pool-section">
         <h2 class="section-title">2. Spin the Wheel</h2>
         <div class="pool-box">
-            <div id="pool-count-label">0 eligible entries loaded</div>
+            <div id="pool-count-label">No entries loaded yet</div>
             <div class="wheel-stage">
                 <canvas id="wheel-canvas" width="340" height="340"></canvas>
             </div>
@@ -242,9 +242,34 @@ $batches = $stmt->fetchAll();
         return [...document.querySelectorAll('.batch-check:checked')].map(c => c.dataset.id);
     }
 
+    // Cut-off = the latest entry deadline among the selected batches, taken
+    // straight from the batch config and pre-formatted server-side.
+    let currentCutoffLabel = null;
+
+    function selectedCutoffLabel() {
+        let bestRaw = null, bestFmt = null;
+        [...document.querySelectorAll('.batch-check:checked')].forEach(c => {
+            const raw = c.dataset.deadline;
+            if (raw && (bestRaw === null || raw > bestRaw)) {
+                bestRaw = raw;
+                bestFmt = c.dataset.deadlineFmt;
+            }
+        });
+        return bestFmt;
+    }
+
+    function renderPoolCountLabel(count) {
+        const el = document.getElementById('pool-count-label');
+        if (!el) return;
+        el.innerText = currentCutoffLabel
+            ? `All entries submitted until ${currentCutoffLabel} loaded for this draw`
+            : `${count} eligible entries loaded`;
+    }
+
     async function loadPool() {
         const batchIds = selectedBatchIds();
         if (batchIds.length === 0) return;
+        currentCutoffLabel = selectedCutoffLabel();
         document.getElementById('pool-section').style.display = 'block';
         await DrawWheel.loadPool(batchIds);
     }
@@ -354,7 +379,7 @@ $batches = $stmt->fetchAll();
     /* ---------- Wire up shared wheel engine hooks ---------- */
 
     DrawWheel.onPoolLoaded = function (pool) {
-        document.getElementById('pool-count-label').innerText = `${pool.length} eligible entries loaded`;
+        renderPoolCountLabel(pool.length);
         document.getElementById('spin-btn').disabled = pool.length === 0;
     };
 
@@ -371,7 +396,7 @@ $batches = $stmt->fetchAll();
     };
 
     DrawWheel.onWinnerResolved = function (winner, action, spinCount) {
-        document.getElementById('pool-count-label').innerText = `${DrawWheel.getPool().length} eligible entries loaded`;
+        renderPoolCountLabel(DrawWheel.getPool().length);
 
         const log = document.getElementById('winners-log');
         const row = document.createElement('div');

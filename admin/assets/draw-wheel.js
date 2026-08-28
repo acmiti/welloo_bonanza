@@ -14,6 +14,7 @@
 
     // Central hub live tracker state
     let hubEntry = null;      // entry currently under the top pointer
+    let hubIndex = -1;        // pool index of the entry in the reel's centre row
     let hubLocked = false;    // true once the wheel stops on the winner
     let hubGlow = 0;          // 0..1 pulse intensity for the winner-lock highlight
 
@@ -109,10 +110,10 @@
 
         // Central hub live tracker — keep it synced to whatever slice is under the pointer
         if (!hubLocked) {
-            const idx = sliceIndexAtPointer(pool.length, rotation);
-            hubEntry = pool[idx] || null;
+            hubIndex = sliceIndexAtPointer(pool.length, rotation);
+            hubEntry = pool[hubIndex] || null;
         }
-        drawHub(ctx, cx, cy, radius, hubEntry);
+        drawHub(ctx, cx, cy, radius, pool, hubIndex);
 
         // Fixed pointer at top, pointing down — scales with the canvas
         const k = size / 340;
@@ -175,13 +176,60 @@
         return t + '…';
     }
 
-    function drawHub(ctx, cx, cy, radius, entry) {
+    // One row of the slot reel. The centre row renders full-height with a gold
+    // border and bold text; the prev/next rows render muted and get visually
+    // clipped by the caller's reel window so only ~half of each one shows.
+    function drawHubRow(ctx, cx, y, w, rowH, entry, s, opts) {
+        const isCenter = !!opts.center;
+        ctx.save();
+        ctx.globalAlpha = isCenter ? 1 : 0.4;
+
+        if (isCenter) {
+            roundRectPath(ctx, cx - w / 2 + 4 * s, y - rowH / 2, w - 8 * s, rowH, 8 * s);
+            ctx.fillStyle = 'rgba(22,15,2,0.92)';
+            ctx.fill();
+            ctx.lineWidth = 2.5 * s;
+            ctx.strokeStyle = opts.locked
+                ? 'rgba(255,153,0,' + (0.6 + 0.4 * hubGlow).toFixed(3) + ')'
+                : '#FFB300';
+            ctx.stroke();
+        }
+
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        const maxW = w - 26 * s;
+
+        if (!entry) {
+            ctx.fillStyle = '#777';
+            ctx.font = (13 * s).toFixed(1) + 'px Segoe UI, sans-serif';
+            ctx.fillText('—', cx, y);
+            ctx.restore();
+            return;
+        }
+
+        const idxLabel = (entry.entry_no || entry.id) ? '#' + (entry.entry_no || entry.id) + '  ' : '';
+
+        // Line 1: entry number + name
+        ctx.fillStyle = isCenter ? (opts.locked ? '#FFFFFF' : '#FF9900') : '#C8C8C8';
+        ctx.font = (isCenter ? 'bold ' : '') + ((isCenter ? 16 : 12.5) * s).toFixed(1) + 'px Segoe UI, sans-serif';
+        ctx.fillText(fitText(ctx, idxLabel + (entry.name || ''), maxW), cx, y - (isCenter ? 7 : 5) * s);
+
+        // Line 2: town — district
+        ctx.fillStyle = isCenter ? (opts.locked ? '#FF9900' : '#FFFFFF') : '#888';
+        ctx.font = ((isCenter ? 11.5 : 10) * s).toFixed(1) + 'px Segoe UI, sans-serif';
+        const loc = [entry.town, entry.district].filter(Boolean).join(' — ');
+        ctx.fillText(fitText(ctx, loc, maxW), cx, y + (isCenter ? 9 : 7) * s);
+
+        ctx.restore();
+    }
+
+    function drawHub(ctx, cx, cy, radius, pool, centerIdx) {
         const s = radius / 164; // scale factor relative to the 340px canvas
-        const w = radius * 1.28;
-        const h = radius * 0.62;
-        const x = cx - w / 2;
-        const y = cy - h / 2;
-        const pad = 14 * s;
+        const rowH = radius * 0.34;
+        const boxW = radius * 1.34;
+        const boxH = rowH * 2; // centre row fully shown; prev/next clipped to ~half
+        const x = cx - boxW / 2;
+        const y = cy - boxH / 2;
 
         ctx.save();
 
@@ -191,8 +239,8 @@
             ctx.shadowBlur = 34 * s * hubGlow;
         }
 
-        roundRectPath(ctx, x, y, w, h, 12 * s);
-        ctx.fillStyle = 'rgba(8,8,8,0.86)';
+        roundRectPath(ctx, x, y, boxW, boxH, 12 * s);
+        ctx.fillStyle = 'rgba(8,8,8,0.9)';
         ctx.fill();
         ctx.shadowBlur = 0;
         ctx.lineWidth = (hubLocked ? 3 : 2) * s;
@@ -201,34 +249,29 @@
             : '#FF6600';
         ctx.stroke();
 
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        const maxW = w - pad * 2;
+        // Clip everything else to the reel window so prev/next rows are cut off.
+        roundRectPath(ctx, x, y, boxW, boxH, 12 * s);
+        ctx.clip();
 
-        if (!entry) {
-            ctx.fillStyle = '#888';
-            ctx.font = (13 * s).toFixed(1) + 'px Segoe UI, sans-serif';
-            ctx.fillText('—', cx, cy);
-            ctx.restore();
-            return;
+        const n = pool ? pool.length : 0;
+        let prev = null, curr = null, next = null;
+        if (n > 0 && centerIdx != null && centerIdx >= 0) {
+            curr = pool[centerIdx % n] || null;
+            prev = pool[(centerIdx - 1 + n) % n] || null;
+            next = pool[(centerIdx + 1) % n] || null;
         }
 
-        // Line 1: entry number + name, bright orange, bold
-        ctx.fillStyle = hubLocked ? '#FFFFFF' : '#FF9900';
-        ctx.font = 'bold ' + (17 * s).toFixed(1) + 'px Segoe UI, sans-serif';
-        const idxLabel = (entry.entry_no || entry.id) ? '#' + (entry.entry_no || entry.id) + '  ' : '';
-        ctx.fillText(fitText(ctx, idxLabel + (entry.name || ''), maxW), cx, cy - h * 0.16);
+        drawHubRow(ctx, cx, cy - rowH, boxW, rowH, prev, s, { center: false });
+        drawHubRow(ctx, cx, cy + rowH, boxW, rowH, next, s, { center: false });
+        drawHubRow(ctx, cx, cy, boxW, rowH, curr, s, { center: true, locked: hubLocked });
 
-        // Line 2: town — district, crisp white
-        ctx.fillStyle = hubLocked ? '#FF9900' : '#FFFFFF';
-        ctx.font = (12.5 * s).toFixed(1) + 'px Segoe UI, sans-serif';
-        const loc = [entry.town, entry.district].filter(Boolean).join(' — ');
-        ctx.fillText(fitText(ctx, loc, maxW), cx, cy + h * 0.14);
-
-        if (hubLocked) {
+        if (hubLocked && curr) {
+            ctx.globalAlpha = 1;
             ctx.fillStyle = 'rgba(255,153,0,' + (0.5 + 0.5 * hubGlow).toFixed(3) + ')';
-            ctx.font = 'bold ' + (9 * s).toFixed(1) + 'px Segoe UI, sans-serif';
-            ctx.fillText('★ WINNER ★', cx, cy + h * 0.34);
+            ctx.font = 'bold ' + (8.5 * s).toFixed(1) + 'px Segoe UI, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('★ WINNER ★', cx, cy + rowH * 0.62);
         }
 
         ctx.restore();
@@ -337,7 +380,9 @@
         wheelRotation = 0;
         hubLocked = false;
         hubGlow = 0;
-        hubEntry = null;
+        // Seed the stationary reel with real entries instead of a single blank row.
+        hubIndex = currentPool.length ? sliceIndexAtPointer(currentPool.length, 0) : -1;
+        hubEntry = currentPool[hubIndex] || null;
         resizeCanvas();
         drawWheel(currentPool, wheelRotation);
         window.DrawWheel.onPoolLoaded(currentPool);
@@ -416,6 +461,7 @@
         spinning = false;
         hubLocked = true;
         hubEntry = winner;
+        hubIndex = currentPool.findIndex(e => e.id === winner.id);
         const holdMs = 1100;
         const t0 = performance.now();
         function pulse(now) {
@@ -472,11 +518,13 @@
 
         hubLocked = false;
         hubGlow = 0;
-        hubEntry = null;
 
         if (action === 'remove') {
             currentPool = currentPool.filter(e => e.id !== winner.id);
         }
+        // Re-seed the stationary reel from the (possibly trimmed) pool.
+        hubIndex = currentPool.length ? sliceIndexAtPointer(currentPool.length, wheelRotation) : -1;
+        hubEntry = currentPool[hubIndex] || null;
         drawWheel(currentPool, wheelRotation);
 
         window.DrawWheel.onWinnerResolved(winner, action, spinCounts[winner.id]);
