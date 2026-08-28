@@ -177,12 +177,12 @@
     }
 
     // One row of the slot reel. The centre row renders full-height with a gold
-    // border and bold text; the prev/next rows render muted and get visually
-    // clipped by the caller's reel window so only ~half of each one shows.
+    // border and bold text; the prev/next rows render at full text height too,
+    // just greyed down so the centre entry stays the clear focus.
     function drawHubRow(ctx, cx, y, w, rowH, entry, s, opts) {
         const isCenter = !!opts.center;
         ctx.save();
-        ctx.globalAlpha = isCenter ? 1 : 0.4;
+        ctx.globalAlpha = isCenter ? 1 : 0.45;
 
         if (isCenter) {
             roundRectPath(ctx, cx - w / 2 + 4 * s, y - rowH / 2, w - 8 * s, rowH, 8 * s);
@@ -207,15 +207,13 @@
             return;
         }
 
-        const idxLabel = (entry.entry_no || entry.id) ? '#' + (entry.entry_no || entry.id) + '  ' : '';
-
-        // Line 1: entry number + name
-        ctx.fillStyle = isCenter ? (opts.locked ? '#FFFFFF' : '#FF9900') : '#C8C8C8';
+        // Line 1: name only (no entry number / ID prefix)
+        ctx.fillStyle = isCenter ? (opts.locked ? '#FFFFFF' : '#FF9900') : '#888888';
         ctx.font = (isCenter ? 'bold ' : '') + ((isCenter ? 16 : 12.5) * s).toFixed(1) + 'px Segoe UI, sans-serif';
-        ctx.fillText(fitText(ctx, idxLabel + (entry.name || ''), maxW), cx, y - (isCenter ? 7 : 5) * s);
+        ctx.fillText(fitText(ctx, entry.name || '', maxW), cx, y - (isCenter ? 7 : 5) * s);
 
         // Line 2: town — district
-        ctx.fillStyle = isCenter ? (opts.locked ? '#FF9900' : '#FFFFFF') : '#888';
+        ctx.fillStyle = isCenter ? (opts.locked ? '#FF9900' : '#FFFFFF') : '#888888';
         ctx.font = ((isCenter ? 11.5 : 10) * s).toFixed(1) + 'px Segoe UI, sans-serif';
         const loc = [entry.town, entry.district].filter(Boolean).join(' — ');
         ctx.fillText(fitText(ctx, loc, maxW), cx, y + (isCenter ? 9 : 7) * s);
@@ -225,9 +223,9 @@
 
     function drawHub(ctx, cx, cy, radius, pool, centerIdx) {
         const s = radius / 164; // scale factor relative to the 340px canvas
-        const rowH = radius * 0.34;
+        const rowH = radius * 0.30;
         const boxW = radius * 1.34;
-        const boxH = rowH * 2; // centre row fully shown; prev/next clipped to ~half
+        const boxH = rowH * 3; // all three rows rendered at full height
         const x = cx - boxW / 2;
         const y = cy - boxH / 2;
 
@@ -271,21 +269,27 @@
             ctx.font = 'bold ' + (8.5 * s).toFixed(1) + 'px Segoe UI, sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText('★ WINNER ★', cx, cy + rowH * 0.62);
+            ctx.fillText('★ WINNER ★', cx, cy + rowH * 1.28);
         }
 
         ctx.restore();
     }
 
-    /* ---------- spin animation: 0-5s multi-revolution spin-up, 5-10s cubic ease-out ---------- */
+    /* ---------- spin animation: 25s total — 0-15s constant-velocity fast spin,
+       15-25s cubic ease-out deceleration onto the winning slice ---------- */
+
+    const SPIN_DURATION_MS = 25000;
+    const FAST_FRACTION = 0.6;   // 15s of 25s spent at full speed
+    const FAST_TRAVEL = 0.72;    // share of total rotation covered during the fast phase
 
     function easeOutCubic(x) { return 1 - Math.pow(1 - x, 3); }
 
     function spinProgress(t) {
-        if (t <= 0.5) {
-            return 1.4 * t; // constant angular velocity for the first 5s (multiple full revolutions)
+        if (t <= FAST_FRACTION) {
+            return (FAST_TRAVEL / FAST_FRACTION) * t; // constant angular velocity for the first 15s
         }
-        return 0.7 + 0.3 * easeOutCubic((t - 0.5) / 0.5); // organic cubic deceleration over the final 5s
+        const d = (t - FAST_FRACTION) / (1 - FAST_FRACTION);
+        return FAST_TRAVEL + (1 - FAST_TRAVEL) * easeOutCubic(d); // smooth cubic slowdown over the final 10s
     }
 
     /* ---------- Web Audio: synthesized tick + fanfare ---------- */
@@ -425,11 +429,11 @@
         const currentMod = normalizeAngle(wheelRotation);
         let delta = desiredMod - currentMod;
         if (delta < 0) delta += Math.PI * 2;
-        const extraSpins = 8 + Math.floor(Math.random() * 3); // 8-10 full turns during the spin-up
+        const extraSpins = 22 + Math.floor(Math.random() * 5); // 22-26 full turns across the 25s spin
         const targetRotation = wheelRotation + delta + extraSpins * Math.PI * 2;
 
         const startRotation = wheelRotation;
-        const duration = 10000;
+        const duration = SPIN_DURATION_MS;
         const t0 = performance.now();
         let lastTickIndex = sliceIndexAtPointer(currentPool.length, wheelRotation);
 
