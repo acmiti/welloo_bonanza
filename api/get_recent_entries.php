@@ -70,10 +70,18 @@ try {
             $city = trim((string) ($row['town'] ?? ''));
         }
 
+        $isoTime = null;
+        if (!empty($row['created_at']) && ($ts = strtotime((string) $row['created_at'])) !== false) {
+            // Explicit Asia/Colombo (+05:30) ISO 8601 string so the client can
+            // compute its own relative time without guessing the server's zone.
+            $isoTime = date('c', $ts);
+        }
+
         $entries[] = [
             'name'    => social_proof_first_name((string) ($row['name'] ?? '')),
             'city'    => $city !== '' ? mb_substr($city, 0, 40) : 'Sri Lanka',
             'time'    => social_proof_relative_time($row['created_at'] ?? null),
+            'iso'     => $isoTime,
         ];
     }
 } catch (PDOException $e) {
@@ -103,7 +111,7 @@ if (count($entries) < 5) {
         if (count($entries) >= 20) {
             break;
         }
-        $entries[] = ['name' => $seed['name'], 'city' => $seed['city'], 'time' => null];
+        $entries[] = ['name' => $seed['name'], 'city' => $seed['city'], 'time' => null, 'iso' => null];
     }
 }
 

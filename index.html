@@ -525,9 +525,14 @@
     let formSubmitted = false;
     let lastCountdownParts = null;
 
-    // MySQL DATETIME ("YYYY-MM-DD HH:MM:SS") isn't reliably parsed as local time
-    // by Date() across browsers unless it's reshaped into an ISO-like string first.
-    function parseServerDateTime(value) {
+    // Prefer the explicit Asia/Colombo (+05:30) ISO string from the API. Fall
+    // back to reshaping a bare MySQL DATETIME ("YYYY-MM-DD HH:MM:SS"), which
+    // Date() otherwise parses inconsistently across browsers.
+    function parseServerDateTime(value, isoValue) {
+        if (isoValue) {
+            const d = new Date(isoValue);
+            if (!isNaN(d.getTime())) return d;
+        }
         return new Date(String(value).replace(' ', 'T'));
     }
 
@@ -555,7 +560,7 @@
             return;
         }
 
-        const deadline = parseServerDateTime(currentBatch.entry_deadline);
+        const deadline = parseServerDateTime(currentBatch.entry_deadline, currentBatch.entry_deadline_iso);
 
         if (Date.now() >= deadline.getTime()) {
             lockEntryForm();

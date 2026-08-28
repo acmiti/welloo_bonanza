@@ -66,6 +66,8 @@ try {
 
     $todayWhere = $where;
     $todayParams = $params;
+    // The PDO connection pins the MySQL session to +05:30 (config/db.php), so
+    // CURDATE() and DATE(created_at) both resolve against Asia/Colombo midnight.
     $todayWhere[] = "DATE(created_at) = CURDATE()";
     $todaySql = "SELECT COUNT(*) AS total FROM bonanza_entries WHERE " . implode(' AND ', $todayWhere);
     $todayStmt = $pdo->prepare($todaySql);

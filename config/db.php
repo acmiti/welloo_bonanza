@@ -1,5 +1,11 @@
 <?php
 // config/db.php — shared PDO database connection
+
+// The business runs on Sri Lanka Standard Time (UTC+5:30). Pin PHP's clock here
+// so every date() / strtotime() call across the app resolves in Asia/Colombo
+// regardless of the server's own timezone.
+date_default_timezone_set('Asia/Colombo');
+
 $db_host = 'localhost';
 $db_name = 'welloocs_bonanza';
 $db_user = 'welloocs_bonanza';
@@ -11,6 +17,9 @@ try {
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
         PDO::ATTR_EMULATE_PREPARES   => false,
     ]);
+    // Align the MySQL session clock with Asia/Colombo so NOW(), CURDATE(),
+    // DATE() and CURRENT_DATE evaluate against Sri Lanka midnight, not UTC.
+    $pdo->exec("SET time_zone = '+05:30'");
 } catch (PDOException $e) {
     http_response_code(500);
     // DEBUG: surfaces the real PDO error string during API calls for diagnosis.

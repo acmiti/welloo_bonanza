@@ -16,7 +16,14 @@ $stmt = $pdo->query(
 $batch = $stmt->fetch();
 
 if ($batch) {
-    $batch['entry_deadline_formatted'] = date('F j, Y \a\t g:i A', strtotime($batch['entry_deadline']));
+    // Stored datetimes are Asia/Colombo wall-clock. Emit them as explicit
+    // +05:30 ISO 8601 strings so the client parses an unambiguous instant
+    // regardless of the visitor's device timezone.
+    $deadlineTs = strtotime($batch['entry_deadline']);
+    $drawTs     = strtotime($batch['draw_datetime']);
+    $batch['entry_deadline_formatted'] = date('F j, Y \a\t g:i A', $deadlineTs);
+    $batch['entry_deadline_iso']       = date('c', $deadlineTs);
+    $batch['draw_datetime_iso']        = $drawTs !== false ? date('c', $drawTs) : null;
 }
 
 echo json_encode([
