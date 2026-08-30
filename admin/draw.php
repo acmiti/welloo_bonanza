@@ -89,17 +89,21 @@ $batches = $stmt->fetchAll();
         .pool-filters.open > .pf-toggle .pf-caret { transform: rotate(90deg); }
         .pool-filters .pf-body { display: none; padding: 18px; }
         .pool-filters.open .pf-body { display: block; }
-        .pf-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 16px; }
-        .pf-field { background: #0F0F0F; border: 1px solid #333; border-radius: 8px; padding: 12px; }
-        .pf-field .pf-name { color: #DDD; font-size: 12px; font-weight: 700; text-transform: uppercase; margin-bottom: 8px; }
-        .pf-mode { display: inline-flex; border: 1px solid #333; border-radius: 6px; overflow: hidden; margin-bottom: 10px; }
-        .pf-mode button { background: #1A1A1A; color: #888; border: none; padding: 6px 10px; font-size: 10.5px; font-weight: 700; text-transform: uppercase; cursor: pointer; }
-        .pf-mode button.active[data-mode="include"] { background: rgba(37,211,102,0.18); color: #25D366; }
-        .pf-mode button.active[data-mode="exclude"] { background: rgba(255,102,0,0.18); color: #FF6600; }
+        .pf-tier { border: 1px solid #333; border-radius: 8px; padding: 14px; margin-bottom: 14px; }
+        .pf-tier-inc { border-left: 3px solid #25D366; }
+        .pf-tier-exc { border-left: 3px solid #FF6600; }
+        .pf-tier-head { color: #DDD; font-size: 12.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.3px; }
+        .pf-tier-inc .pf-tier-head { color: #25D366; }
+        .pf-tier-exc .pf-tier-head { color: #FF6600; }
+        .pf-tier-head span { color: #888; font-weight: 600; text-transform: none; letter-spacing: 0; }
+        .pf-tier-hint { color: #777; font-size: 11px; margin: 3px 0 12px; }
+        .pf-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; }
+        .pf-field { position: relative; background: #0F0F0F; border: 1px solid #333; border-radius: 8px; padding: 12px; }
+        .pf-field .pf-name { color: #CCC; font-size: 11px; font-weight: 700; text-transform: uppercase; margin-bottom: 8px; }
         .pf-search { width: 100%; background: #1A1A1A; border: 1px solid #333; color: #FFF; padding: 8px 10px; border-radius: 6px; font-size: 12.5px; }
         .pf-search:focus { outline: none; border-color: #4DA6FF; }
-        .pf-menu { max-height: 150px; overflow-y: auto; border: 1px solid #2A2A2A; border-radius: 6px; margin-top: 6px; display: none; }
-        .pf-field.searching .pf-menu { display: block; }
+        .pf-menu { position: absolute; left: 12px; right: 12px; z-index: 20; background: #141414; max-height: 180px; overflow-y: auto; border: 1px solid #3A3A3A; border-radius: 6px; margin-top: 4px; display: none; box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
+        .pf-field.open-menu .pf-menu { display: block; }
         .pf-opt { padding: 6px 10px; font-size: 12px; color: #CCC; cursor: pointer; display: flex; align-items: center; gap: 8px; }
         .pf-opt:hover { background: #202020; }
         .pf-opt.selected { color: #4DA6FF; }
@@ -219,38 +223,62 @@ $batches = $stmt->fetchAll();
                 <span class="pf-caret">▸</span>
             </button>
             <div class="pf-body">
-                <div class="pf-grid">
-                    <div class="pf-field" data-field="district" data-column="districts">
-                        <div class="pf-name">District</div>
-                        <div class="pf-mode">
-                            <button type="button" class="active" data-mode="include">Include (Only)</button>
-                            <button type="button" data-mode="exclude">Exclude</button>
+                <div class="pf-tier pf-tier-inc">
+                    <div class="pf-tier-head">1. Inclusion Filters <span>(Base Pool)</span></div>
+                    <div class="pf-tier-hint">Leave blank to include ALL entries.</div>
+                    <div class="pf-grid">
+                        <div class="pf-field" data-field="inc_district" data-src="district">
+                            <div class="pf-name">Included Districts</div>
+                            <select class="pf-select" multiple hidden></select>
+                            <input type="text" class="pf-search" placeholder="Search districts…" autocomplete="off">
+                            <div class="pf-menu"></div>
+                            <div class="pf-chips"></div>
                         </div>
-                        <input type="text" class="pf-search" placeholder="Search districts…">
-                        <div class="pf-menu"></div>
-                        <div class="pf-chips"></div>
-                    </div>
-                    <div class="pf-field" data-field="city" data-column="cities">
-                        <div class="pf-name">City / Town</div>
-                        <div class="pf-mode">
-                            <button type="button" class="active" data-mode="include">Include (Only)</button>
-                            <button type="button" data-mode="exclude">Exclude</button>
+                        <div class="pf-field" data-field="inc_city" data-src="city">
+                            <div class="pf-name">Included Cities / Towns</div>
+                            <select class="pf-select" multiple hidden></select>
+                            <input type="text" class="pf-search" placeholder="Search cities / towns…" autocomplete="off">
+                            <div class="pf-menu"></div>
+                            <div class="pf-chips"></div>
                         </div>
-                        <input type="text" class="pf-search" placeholder="Search cities / towns…">
-                        <div class="pf-menu"></div>
-                        <div class="pf-chips"></div>
-                    </div>
-                    <div class="pf-field" data-field="dealer" data-column="dealers">
-                        <div class="pf-name">Dealer</div>
-                        <div class="pf-mode">
-                            <button type="button" class="active" data-mode="include">Include (Only)</button>
-                            <button type="button" data-mode="exclude">Exclude</button>
+                        <div class="pf-field" data-field="inc_dealer" data-src="dealer">
+                            <div class="pf-name">Included Dealers</div>
+                            <select class="pf-select" multiple hidden></select>
+                            <input type="text" class="pf-search" placeholder="Search dealers…" autocomplete="off">
+                            <div class="pf-menu"></div>
+                            <div class="pf-chips"></div>
                         </div>
-                        <input type="text" class="pf-search" placeholder="Search dealers…">
-                        <div class="pf-menu"></div>
-                        <div class="pf-chips"></div>
                     </div>
                 </div>
+
+                <div class="pf-tier pf-tier-exc">
+                    <div class="pf-tier-head">2. Exclusion Filters <span>(Remove from Base Pool)</span></div>
+                    <div class="pf-tier-hint">Selected items will be removed from the included base pool.</div>
+                    <div class="pf-grid">
+                        <div class="pf-field" data-field="exc_district" data-src="district">
+                            <div class="pf-name">Excluded Districts</div>
+                            <select class="pf-select" multiple hidden></select>
+                            <input type="text" class="pf-search" placeholder="Search districts…" autocomplete="off">
+                            <div class="pf-menu"></div>
+                            <div class="pf-chips"></div>
+                        </div>
+                        <div class="pf-field" data-field="exc_city" data-src="city">
+                            <div class="pf-name">Excluded Cities / Towns</div>
+                            <select class="pf-select" multiple hidden></select>
+                            <input type="text" class="pf-search" placeholder="Search cities / towns…" autocomplete="off">
+                            <div class="pf-menu"></div>
+                            <div class="pf-chips"></div>
+                        </div>
+                        <div class="pf-field" data-field="exc_dealer" data-src="dealer">
+                            <div class="pf-name">Excluded Dealers</div>
+                            <select class="pf-select" multiple hidden></select>
+                            <input type="text" class="pf-search" placeholder="Search dealers…" autocomplete="off">
+                            <div class="pf-menu"></div>
+                            <div class="pf-chips"></div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="pf-actions">
                     <button class="btn" type="button" onclick="loadPool()">Apply Filters &amp; Reload Pool</button>
                     <button class="btn btn-secondary" type="button" onclick="clearPoolFilters()">Clear</button>
@@ -367,6 +395,14 @@ $batches = $stmt->fetchAll();
         if (city) params.set('target_city', city);
         if (dealer) params.set('target_dealer', dealer);
 
+        // Carry the cut-off label and the advanced pool filters over to the stage view.
+        const cutoff = selectedCutoffLabel();
+        if (cutoff) params.set('cutoff', cutoff);
+        const poolFilters = collectPoolFilters();
+        if (Object.values(poolFilters).some(arr => arr.length)) {
+            params.set('filters', JSON.stringify(poolFilters));
+        }
+
         window.open('/admin/draw_stage.php?' + params.toString(), 'StreamView', 'width=1280,height=720,menubar=no,toolbar=no,location=no,status=no,resizable=yes,noopener');
     }
 
@@ -456,13 +492,86 @@ $batches = $stmt->fetchAll();
 
     initCriteriaDropdowns();
 
-    /* ---------- Advanced draw-pool filters: searchable multi-select + include/exclude ---------- */
+    /* ---------- Advanced draw-pool filters: two-tier Inclusion → Exclusion pipeline ---------- */
 
-    const poolFilterState = {
-        district: { mode: 'include', selected: new Set(), options: [] },
-        city:     { mode: 'include', selected: new Set(), options: [] },
-        dealer:   { mode: 'include', selected: new Set(), options: [] },
-    };
+    // Each .pf-field owns a hidden native <select multiple> that is the single
+    // source of truth — chips, menu and the submitted payload all read from it,
+    // so Apply sends exactly what the UI shows. `field` = the .pf-field key
+    // (inc_district…exc_dealer); `param` = the API array name; `src` = which
+    // option list (district/city/dealer) feeds its suggestions.
+    const PF_FIELDS = [
+        { field: 'inc_district', param: 'inc_districts', src: 'district', label: 'District' },
+        { field: 'inc_city',     param: 'inc_cities',    src: 'city',     label: 'City' },
+        { field: 'inc_dealer',   param: 'inc_dealers',   src: 'dealer',   label: 'Dealer' },
+        { field: 'exc_district', param: 'exc_districts', src: 'district', label: 'District' },
+        { field: 'exc_city',     param: 'exc_cities',    src: 'city',     label: 'City' },
+        { field: 'exc_dealer',   param: 'exc_dealers',   src: 'dealer',   label: 'Dealer' },
+    ];
+    const pfOptionCache = { district: [], city: [], dealer: [] };
+    const pfDef = key => PF_FIELDS.find(d => d.field === key);
+
+    function pfFieldEl(key) { return document.querySelector(`#pool-filters .pf-field[data-field="${key}"]`); }
+    function pfSelect(key) { return pfFieldEl(key).querySelector('.pf-select'); }
+    function pfSelectedValues(key) { return [...pfSelect(key).selectedOptions].map(o => String(o.value)); }
+
+    function pfSetSelected(key, value, on) {
+        const select = pfSelect(key);
+        let opt = [...select.options].find(o => o.value === value);
+        if (!opt) {
+            opt = document.createElement('option');
+            opt.value = value;
+            opt.text = value;
+            select.appendChild(opt);
+        }
+        opt.selected = on;
+        pfRenderField(key);
+    }
+
+    function pfRenderMenu(key) {
+        const field = pfFieldEl(key);
+        const menu = field.querySelector('.pf-menu');
+        const q = field.querySelector('.pf-search').value.trim().toLowerCase();
+        const selected = new Set(pfSelectedValues(key));
+        const options = pfOptionCache[pfDef(key).src];
+        const matches = options.filter(o => o.toLowerCase().includes(q)).slice(0, 60);
+
+        if (matches.length === 0) {
+            menu.innerHTML = '<div class="pf-opt empty">' + (options.length ? 'No matches' : 'No options available') + '</div>';
+            return;
+        }
+        menu.innerHTML = matches.map(o =>
+            `<div class="pf-opt${selected.has(o) ? ' selected' : ''}" data-value="${DrawWheel.escapeHtml(o)}">` +
+            `${selected.has(o) ? '☑' : '☐'} ${DrawWheel.escapeHtml(o)}</div>`
+        ).join('');
+    }
+
+    function pfRenderChips(key) {
+        const chips = pfFieldEl(key).querySelector('.pf-chips');
+        chips.innerHTML = pfSelectedValues(key).map(v =>
+            `<span class="pf-chip">${DrawWheel.escapeHtml(v)}` +
+            `<button type="button" data-value="${DrawWheel.escapeHtml(v)}" aria-label="Remove">×</button></span>`
+        ).join('');
+    }
+
+    function pfRenderSummary() {
+        const el = document.getElementById('pf-summary');
+        if (!el) return;
+        const inc = [], exc = [];
+        PF_FIELDS.forEach(d => {
+            const n = pfSelectedValues(d.field).length;
+            if (n > 0) (d.field.startsWith('inc') ? inc : exc).push(`${n} ${d.label}${n > 1 ? 's' : ''}`);
+        });
+        const parts = [];
+        if (inc.length) parts.push('Include ' + inc.join(', '));
+        if (exc.length) parts.push('Exclude ' + exc.join(', '));
+        el.innerText = parts.length ? parts.join('  →  ') : 'No filters applied — full eligible pool.';
+    }
+
+    function pfRenderField(key) {
+        pfRenderMenu(key);
+        pfRenderChips(key);
+        pfRenderSummary();
+    }
 
     async function initPoolFilters() {
         let triples = [];
@@ -470,113 +579,61 @@ $batches = $stmt->fetchAll();
             const res = await fetch('/api/get_filter_options.php?mode=triples', { headers: { 'Accept': 'application/json' } });
             const data = await res.json();
             if (data.status === 'success') triples = data.triples || [];
-        } catch (e) { /* leave options empty — filters just won't offer suggestions */ }
+        } catch (e) { /* leave options empty — Apply still works, just no suggestions */ }
 
-        poolFilterState.district.options = uniqueSorted(triples.map(t => t.district));
-        poolFilterState.city.options     = uniqueSorted(triples.map(t => t.town));
-        poolFilterState.dealer.options   = uniqueSorted(triples.map(t => t.dealer));
+        pfOptionCache.district = uniqueSorted(triples.map(t => t.district));
+        pfOptionCache.city     = uniqueSorted(triples.map(t => t.town));
+        pfOptionCache.dealer   = uniqueSorted(triples.map(t => t.dealer));
 
-        document.querySelectorAll('#pool-filters .pf-field').forEach(field => {
-            const key = field.dataset.field;
+        PF_FIELDS.forEach(({ field: key }) => {
+            const field = pfFieldEl(key);
             const search = field.querySelector('.pf-search');
             const menu = field.querySelector('.pf-menu');
 
-            field.querySelectorAll('.pf-mode button').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    field.querySelectorAll('.pf-mode button').forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
-                    poolFilterState[key].mode = btn.dataset.mode;
-                    renderPoolFilterSummary();
-                });
-            });
+            search.addEventListener('input', () => { field.classList.add('open-menu'); pfRenderMenu(key); });
+            search.addEventListener('focus', () => { field.classList.add('open-menu'); pfRenderMenu(key); });
 
-            search.addEventListener('input', () => renderPoolFilterMenu(field));
-            search.addEventListener('focus', () => { field.classList.add('searching'); renderPoolFilterMenu(field); });
-            search.addEventListener('blur', () => setTimeout(() => field.classList.remove('searching'), 150));
-
+            // mousedown (not click) so the option toggles before the input blurs.
             menu.addEventListener('mousedown', e => {
                 const opt = e.target.closest('.pf-opt');
                 if (!opt || opt.classList.contains('empty')) return;
                 e.preventDefault();
                 const val = opt.dataset.value;
-                const set = poolFilterState[key].selected;
-                set.has(val) ? set.delete(val) : set.add(val);
+                pfSetSelected(key, val, !new Set(pfSelectedValues(key)).has(val));
                 search.value = '';
-                renderPoolFilterMenu(field);
-                renderPoolFilterChips(field);
-                renderPoolFilterSummary();
+                search.focus();
             });
 
-            renderPoolFilterChips(field);
+            field.querySelector('.pf-chips').addEventListener('click', e => {
+                const btn = e.target.closest('button[data-value]');
+                if (btn) pfSetSelected(key, btn.dataset.value, false);
+            });
+
+            pfRenderField(key);
         });
-        renderPoolFilterSummary();
-    }
 
-    function renderPoolFilterMenu(field) {
-        const key = field.dataset.field;
-        const st = poolFilterState[key];
-        const q = field.querySelector('.pf-search').value.trim().toLowerCase();
-        const matches = st.options.filter(o => o.toLowerCase().includes(q)).slice(0, 50);
-        const menu = field.querySelector('.pf-menu');
-        if (matches.length === 0) {
-            menu.innerHTML = '<div class="pf-opt empty">No matches</div>';
-            return;
-        }
-        menu.innerHTML = matches.map(o => {
-            const sel = st.selected.has(o) ? ' selected' : '';
-            return `<div class="pf-opt${sel}" data-value="${DrawWheel.escapeHtml(o)}">${st.selected.has(o) ? '☑' : '☐'} ${DrawWheel.escapeHtml(o)}</div>`;
-        }).join('');
-    }
-
-    function renderPoolFilterChips(field) {
-        const key = field.dataset.field;
-        const chips = field.querySelector('.pf-chips');
-        chips.innerHTML = [...poolFilterState[key].selected].map(v =>
-            `<span class="pf-chip">${DrawWheel.escapeHtml(v)}<button type="button" data-value="${DrawWheel.escapeHtml(v)}">×</button></span>`
-        ).join('');
-        chips.querySelectorAll('button').forEach(btn => {
-            btn.addEventListener('click', () => {
-                poolFilterState[key].selected.delete(btn.dataset.value);
-                renderPoolFilterChips(field);
-                renderPoolFilterMenu(field);
-                renderPoolFilterSummary();
+        document.addEventListener('click', e => {
+            document.querySelectorAll('#pool-filters .pf-field.open-menu').forEach(field => {
+                if (!field.contains(e.target)) field.classList.remove('open-menu');
             });
         });
     }
 
-    function renderPoolFilterSummary() {
-        const el = document.getElementById('pf-summary');
-        if (!el) return;
-        const parts = [];
-        [['district', 'District'], ['city', 'City'], ['dealer', 'Dealer']].forEach(([key, label]) => {
-            const st = poolFilterState[key];
-            if (st.selected.size > 0) {
-                parts.push(`${st.mode === 'exclude' ? 'Exclude' : 'Only'} ${st.selected.size} ${label}${st.selected.size > 1 ? 's' : ''}`);
-            }
-        });
-        el.innerText = parts.length ? parts.join(' · ') : 'No filters applied — full eligible pool.';
-    }
-
+    // String-array payload keyed by the API param names. Inclusion first, then exclusion.
     function collectPoolFilters() {
-        const map = { district: 'districts', city: 'cities', dealer: 'dealers' };
         const out = {};
-        Object.entries(map).forEach(([key, col]) => {
-            const st = poolFilterState[key];
-            const vals = [...st.selected];
-            out['include_' + col] = st.mode === 'include' ? vals : [];
-            out['exclude_' + col] = st.mode === 'exclude' ? vals : [];
-        });
+        PF_FIELDS.forEach(d => { out[d.param] = pfSelectedValues(d.field); });
         return out;
     }
 
     function clearPoolFilters() {
-        Object.values(poolFilterState).forEach(st => { st.selected.clear(); st.mode = 'include'; });
-        document.querySelectorAll('#pool-filters .pf-field').forEach(field => {
-            field.querySelectorAll('.pf-mode button').forEach(b => b.classList.toggle('active', b.dataset.mode === 'include'));
+        PF_FIELDS.forEach(({ field: key }) => {
+            pfSelect(key).innerHTML = '';
+            const field = pfFieldEl(key);
             field.querySelector('.pf-search').value = '';
-            renderPoolFilterChips(field);
+            field.classList.remove('open-menu');
+            pfRenderField(key);
         });
-        renderPoolFilterSummary();
     }
 
     initPoolFilters();

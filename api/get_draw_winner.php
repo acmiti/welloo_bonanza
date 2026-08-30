@@ -39,13 +39,15 @@ $filterValues = static function ($raw): array {
     }
     return array_values(array_unique(array_filter(array_map('trim', array_map('strval', $raw)), fn($s) => $s !== '')));
 };
+// Two-tier pipeline: inclusion clauses build the base pool, exclusion clauses
+// are then applied on top. Each row: [accepted request keys, column, isExclude].
 $filterDefs = [
-    ['include_districts', 'district', false],
-    ['exclude_districts', 'district', true],
-    ['include_cities',    'town',     false],
-    ['exclude_cities',    'town',     true],
-    ['include_dealers',   'dealer',   false],
-    ['exclude_dealers',   'dealer',   true],
+    [['inc_districts', 'include_districts'], 'district', false],
+    [['inc_cities',    'include_cities'],    'town',     false],
+    [['inc_dealers',   'include_dealers'],   'dealer',   false],
+    [['exc_districts', 'exclude_districts'], 'district', true],
+    [['exc_cities',    'exclude_cities'],    'town',     true],
+    [['exc_dealers',   'exclude_dealers'],   'dealer',   true],
 ];
 
 $placeholders = [];
@@ -57,14 +59,21 @@ foreach ($batchIds as $i => $id) {
 }
 
 $filterSql = '';
-foreach ($filterDefs as [$field, $column, $isExclude]) {
-    $values = $filterValues($body[$field] ?? []);
+foreach ($filterDefs as [$reqKeys, $column, $isExclude]) {
+    $values = [];
+    foreach ((array) $reqKeys as $rk) {
+        if (isset($body[$rk])) {
+            $values = array_merge($values, $filterValues($body[$rk]));
+        }
+    }
+    $values = array_values(array_unique($values));
     if (empty($values)) {
         continue;
     }
+    $tag = is_array($reqKeys) ? $reqKeys[0] : $reqKeys;
     $keys = [];
     foreach ($values as $j => $val) {
-        $key = ":f_{$field}_{$j}";
+        $key = ":f_{$tag}_{$j}";
         $keys[] = $key;
         $params[$key] = $val;
     }

@@ -9,6 +9,24 @@ $batchIds = array_values(array_filter(array_map('intval', explode(',', (string) 
 $targetDistrict = trim((string) ($_GET['target_district'] ?? ''));
 $targetCity     = trim((string) ($_GET['target_city'] ?? ''));
 $targetDealer   = trim((string) ($_GET['target_dealer'] ?? ''));
+
+// Cut-off label + advanced pool filters carried over from the Draw Manager launch.
+$cutoffLabel = trim((string) ($_GET['cutoff'] ?? ''));
+$poolFilters = [];
+if (isset($_GET['filters']) && $_GET['filters'] !== '') {
+    $decoded = json_decode((string) $_GET['filters'], true);
+    if (is_array($decoded)) {
+        foreach (['inc_districts', 'inc_cities', 'inc_dealers', 'exc_districts', 'exc_cities', 'exc_dealers'] as $k) {
+            $vals = $decoded[$k] ?? [];
+            $poolFilters[$k] = is_array($vals)
+                ? array_values(array_filter(array_map('strval', $vals), fn($s) => $s !== ''))
+                : [];
+        }
+    }
+}
+$subtitleText = $cutoffLabel !== ''
+    ? 'All entries submitted until ' . $cutoffLabel . ' loaded'
+    : 'All submitted entries loaded';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -74,7 +92,7 @@ $targetDealer   = trim((string) ($_GET['target_dealer'] ?? ''));
     <div class="stage">
         <div class="stage-brand">Welloo Bonanza — Live Draw</div>
         <div class="pool-box">
-            <div id="pool-count-label">Loading pool…</div>
+            <div id="pool-count-label"><?= htmlspecialchars($subtitleText) ?></div>
             <div class="wheel-stage">
                 <canvas id="wheel-canvas" width="420" height="420"></canvas>
             </div>
@@ -130,9 +148,16 @@ $targetDealer   = trim((string) ($_GET['target_dealer'] ?? ''));
         document.querySelector('.wheel-stage').addEventListener('dblclick', toggleFullscreen);
 
         const STAGE_BATCH_IDS = <?= json_encode($batchIds) ?>;
+        const STAGE_POOL_FILTERS = <?= json_encode((object) $poolFilters) ?>;
+        // Fixed subtitle — mirrors the Draw Manager. Never overwritten with a live count.
+        const SUBTITLE_TEXT = <?= json_encode($subtitleText) ?>;
+
+        function renderSubtitle() {
+            document.getElementById('pool-count-label').innerText = SUBTITLE_TEXT;
+        }
 
         DrawWheel.onPoolLoaded = function (pool) {
-            document.getElementById('pool-count-label').innerText = `${pool.length} eligible entries loaded`;
+            renderSubtitle();
             document.getElementById('spin-btn').disabled = pool.length === 0;
         };
 
@@ -146,13 +171,17 @@ $targetDealer   = trim((string) ($_GET['target_dealer'] ?? ''));
 
         DrawWheel.onSpinSettled = function () {
             document.getElementById('spin-btn').disabled = DrawWheel.getPool().length === 0;
-            document.getElementById('pool-count-label').innerText = `${DrawWheel.getPool().length} eligible entries loaded`;
+            renderSubtitle();
+        };
+
+        DrawWheel.onWinnerResolved = function () {
+            renderSubtitle();
         };
 
         if (STAGE_BATCH_IDS.length === 0) {
             document.getElementById('pool-count-label').innerText = 'No batches selected — relaunch from Draw Manager';
         } else {
-            DrawWheel.loadPool(STAGE_BATCH_IDS);
+            DrawWheel.loadPool(STAGE_BATCH_IDS, STAGE_POOL_FILTERS);
         }
     </script>
 </body>
