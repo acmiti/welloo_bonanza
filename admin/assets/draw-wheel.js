@@ -6,6 +6,7 @@
 
     let currentPool = [];
     let batchIds = [];
+    let currentFilters = {}; // advanced pool filters: include_/exclude_ districts/cities/dealers
     let wheelRotation = 0;
     let spinning = false;
     let pendingWinner = null;
@@ -365,12 +366,13 @@
 
     /* ---------- pool loading ---------- */
 
-    async function loadPool(ids) {
+    async function loadPool(ids, filters) {
         batchIds = ids;
+        currentFilters = filters && typeof filters === 'object' ? filters : {};
         const res = await fetch('/api/get_draw_pool.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-            body: JSON.stringify({ batch_ids: batchIds })
+            body: JSON.stringify(Object.assign({ batch_ids: batchIds }, currentFilters))
         });
         const data = await res.json();
 
@@ -408,7 +410,7 @@
             const res = await fetch('/api/get_draw_winner.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-                body: JSON.stringify({ batch_ids: batchIds, criteria: getCriteria() })
+                body: JSON.stringify(Object.assign({ batch_ids: batchIds, criteria: getCriteria() }, currentFilters))
             });
             const data = await res.json();
             if (data.status === 'success' && data.winner) {

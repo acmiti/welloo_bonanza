@@ -82,6 +82,34 @@ $batches = $stmt->fetchAll();
         .criteria-fields select { width: 100%; background: #0F0F0F; border: 1px solid #333; color: #FFF; padding: 9px 10px; border-radius: 6px; font-size: 13px; }
         .criteria-fields select:focus { outline: none; border-color: #4DA6FF; }
 
+        /* Advanced draw-pool filters (collapsible) */
+        .pool-filters { background: #1A1A1A; border: 1px solid #333; border-radius: 10px; margin-top: 14px; overflow: hidden; }
+        .pool-filters > .pf-toggle { width: 100%; background: #202020; border: none; color: #FF9900; font-size: 12.5px; font-weight: 700; text-transform: uppercase; text-align: left; padding: 14px 18px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+        .pool-filters > .pf-toggle .pf-caret { transition: transform 0.2s ease; }
+        .pool-filters.open > .pf-toggle .pf-caret { transform: rotate(90deg); }
+        .pool-filters .pf-body { display: none; padding: 18px; }
+        .pool-filters.open .pf-body { display: block; }
+        .pf-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 16px; }
+        .pf-field { background: #0F0F0F; border: 1px solid #333; border-radius: 8px; padding: 12px; }
+        .pf-field .pf-name { color: #DDD; font-size: 12px; font-weight: 700; text-transform: uppercase; margin-bottom: 8px; }
+        .pf-mode { display: inline-flex; border: 1px solid #333; border-radius: 6px; overflow: hidden; margin-bottom: 10px; }
+        .pf-mode button { background: #1A1A1A; color: #888; border: none; padding: 6px 10px; font-size: 10.5px; font-weight: 700; text-transform: uppercase; cursor: pointer; }
+        .pf-mode button.active[data-mode="include"] { background: rgba(37,211,102,0.18); color: #25D366; }
+        .pf-mode button.active[data-mode="exclude"] { background: rgba(255,102,0,0.18); color: #FF6600; }
+        .pf-search { width: 100%; background: #1A1A1A; border: 1px solid #333; color: #FFF; padding: 8px 10px; border-radius: 6px; font-size: 12.5px; }
+        .pf-search:focus { outline: none; border-color: #4DA6FF; }
+        .pf-menu { max-height: 150px; overflow-y: auto; border: 1px solid #2A2A2A; border-radius: 6px; margin-top: 6px; display: none; }
+        .pf-field.searching .pf-menu { display: block; }
+        .pf-opt { padding: 6px 10px; font-size: 12px; color: #CCC; cursor: pointer; display: flex; align-items: center; gap: 8px; }
+        .pf-opt:hover { background: #202020; }
+        .pf-opt.selected { color: #4DA6FF; }
+        .pf-opt.empty { color: #666; cursor: default; }
+        .pf-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+        .pf-chip { background: #262626; border: 1px solid #444; color: #DDD; border-radius: 12px; padding: 3px 8px; font-size: 11px; display: inline-flex; align-items: center; gap: 6px; }
+        .pf-chip button { background: none; border: none; color: #FF6600; cursor: pointer; font-size: 13px; line-height: 1; padding: 0; }
+        .pf-actions { margin-top: 16px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .pf-actions .pf-summary { color: #888; font-size: 11.5px; }
+
         #winners-section { display: none; }
         .winner-row { background: #141414; border: 1px solid #2A2A2A; border-radius: 6px; padding: 10px 14px; font-size: 12.5px; color: #DDD; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
 
@@ -136,7 +164,7 @@ $batches = $stmt->fetchAll();
             <tbody>
                 <?php foreach ($batches as $b): ?>
                     <tr>
-                        <td><input type="checkbox" class="batch-check" data-id="<?= (int) $b['id'] ?>" data-eligible="<?= (int) $b['eligible_entries'] ?>" data-deadline="<?= htmlspecialchars($b['entry_deadline']) ?>" data-deadline-fmt="<?= htmlspecialchars(date('M j, Y \a\t g:i A', strtotime($b['entry_deadline']))) ?>" onchange="updateSelectionSummary()"></td>
+                        <td><input type="checkbox" class="batch-check" data-id="<?= (int) $b['id'] ?>" data-eligible="<?= (int) $b['eligible_entries'] ?>" data-deadline="<?= htmlspecialchars($b['entry_deadline']) ?>" data-deadline-fmt="<?= htmlspecialchars(date('M j, Y, g:i A', strtotime($b['entry_deadline']))) ?>" onchange="updateSelectionSummary()"></td>
                         <td><strong><?= htmlspecialchars($b['batch_name']) ?></strong></td>
                         <td><span class="badge badge-<?= $b['status'] ?>"><?= htmlspecialchars($b['status']) ?></span></td>
                         <td><?= date('M d, Y H:i', strtotime($b['draw_datetime'])) ?></td>
@@ -184,6 +212,53 @@ $batches = $stmt->fetchAll();
 
     <div id="pool-section">
         <h2 class="section-title">2. Spin the Wheel</h2>
+
+        <div class="pool-filters" id="pool-filters">
+            <button type="button" class="pf-toggle" onclick="document.getElementById('pool-filters').classList.toggle('open')">
+                <span>⚙ Advanced Draw Pool Filters</span>
+                <span class="pf-caret">▸</span>
+            </button>
+            <div class="pf-body">
+                <div class="pf-grid">
+                    <div class="pf-field" data-field="district" data-column="districts">
+                        <div class="pf-name">District</div>
+                        <div class="pf-mode">
+                            <button type="button" class="active" data-mode="include">Include (Only)</button>
+                            <button type="button" data-mode="exclude">Exclude</button>
+                        </div>
+                        <input type="text" class="pf-search" placeholder="Search districts…">
+                        <div class="pf-menu"></div>
+                        <div class="pf-chips"></div>
+                    </div>
+                    <div class="pf-field" data-field="city" data-column="cities">
+                        <div class="pf-name">City / Town</div>
+                        <div class="pf-mode">
+                            <button type="button" class="active" data-mode="include">Include (Only)</button>
+                            <button type="button" data-mode="exclude">Exclude</button>
+                        </div>
+                        <input type="text" class="pf-search" placeholder="Search cities / towns…">
+                        <div class="pf-menu"></div>
+                        <div class="pf-chips"></div>
+                    </div>
+                    <div class="pf-field" data-field="dealer" data-column="dealers">
+                        <div class="pf-name">Dealer</div>
+                        <div class="pf-mode">
+                            <button type="button" class="active" data-mode="include">Include (Only)</button>
+                            <button type="button" data-mode="exclude">Exclude</button>
+                        </div>
+                        <input type="text" class="pf-search" placeholder="Search dealers…">
+                        <div class="pf-menu"></div>
+                        <div class="pf-chips"></div>
+                    </div>
+                </div>
+                <div class="pf-actions">
+                    <button class="btn" type="button" onclick="loadPool()">Apply Filters &amp; Reload Pool</button>
+                    <button class="btn btn-secondary" type="button" onclick="clearPoolFilters()">Clear</button>
+                    <span class="pf-summary" id="pf-summary">No filters applied — full eligible pool.</span>
+                </div>
+            </div>
+        </div>
+
         <div class="pool-box">
             <div id="pool-count-label">No entries loaded yet</div>
             <div class="wheel-stage">
@@ -235,6 +310,11 @@ $batches = $stmt->fetchAll();
         if (loadBtn) loadBtn.disabled = checked.length === 0;
         const streamBtn = document.getElementById('stream-view-btn');
         if (streamBtn) streamBtn.disabled = checked.length === 0;
+        // Reveal section 2 as soon as a batch is picked so the filter panel is reachable before loading.
+        if (checked.length > 0) {
+            const ps = document.getElementById('pool-section');
+            if (ps) ps.style.display = 'block';
+        }
     }
     updateSelectionSummary();
 
@@ -258,12 +338,12 @@ $batches = $stmt->fetchAll();
         return bestFmt;
     }
 
-    function renderPoolCountLabel(count) {
+    function renderPoolCountLabel() {
         const el = document.getElementById('pool-count-label');
         if (!el) return;
         el.innerText = currentCutoffLabel
-            ? `All entries submitted until ${currentCutoffLabel} loaded for this draw`
-            : `${count} eligible entries loaded`;
+            ? `All entries submitted until ${currentCutoffLabel} loaded`
+            : 'All submitted entries loaded';
     }
 
     async function loadPool() {
@@ -271,7 +351,7 @@ $batches = $stmt->fetchAll();
         if (batchIds.length === 0) return;
         currentCutoffLabel = selectedCutoffLabel();
         document.getElementById('pool-section').style.display = 'block';
-        await DrawWheel.loadPool(batchIds);
+        await DrawWheel.loadPool(batchIds, collectPoolFilters());
     }
 
     function launchStreamView() {
@@ -375,6 +455,131 @@ $batches = $stmt->fetchAll();
     }
 
     initCriteriaDropdowns();
+
+    /* ---------- Advanced draw-pool filters: searchable multi-select + include/exclude ---------- */
+
+    const poolFilterState = {
+        district: { mode: 'include', selected: new Set(), options: [] },
+        city:     { mode: 'include', selected: new Set(), options: [] },
+        dealer:   { mode: 'include', selected: new Set(), options: [] },
+    };
+
+    async function initPoolFilters() {
+        let triples = [];
+        try {
+            const res = await fetch('/api/get_filter_options.php?mode=triples', { headers: { 'Accept': 'application/json' } });
+            const data = await res.json();
+            if (data.status === 'success') triples = data.triples || [];
+        } catch (e) { /* leave options empty — filters just won't offer suggestions */ }
+
+        poolFilterState.district.options = uniqueSorted(triples.map(t => t.district));
+        poolFilterState.city.options     = uniqueSorted(triples.map(t => t.town));
+        poolFilterState.dealer.options   = uniqueSorted(triples.map(t => t.dealer));
+
+        document.querySelectorAll('#pool-filters .pf-field').forEach(field => {
+            const key = field.dataset.field;
+            const search = field.querySelector('.pf-search');
+            const menu = field.querySelector('.pf-menu');
+
+            field.querySelectorAll('.pf-mode button').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    field.querySelectorAll('.pf-mode button').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    poolFilterState[key].mode = btn.dataset.mode;
+                    renderPoolFilterSummary();
+                });
+            });
+
+            search.addEventListener('input', () => renderPoolFilterMenu(field));
+            search.addEventListener('focus', () => { field.classList.add('searching'); renderPoolFilterMenu(field); });
+            search.addEventListener('blur', () => setTimeout(() => field.classList.remove('searching'), 150));
+
+            menu.addEventListener('mousedown', e => {
+                const opt = e.target.closest('.pf-opt');
+                if (!opt || opt.classList.contains('empty')) return;
+                e.preventDefault();
+                const val = opt.dataset.value;
+                const set = poolFilterState[key].selected;
+                set.has(val) ? set.delete(val) : set.add(val);
+                search.value = '';
+                renderPoolFilterMenu(field);
+                renderPoolFilterChips(field);
+                renderPoolFilterSummary();
+            });
+
+            renderPoolFilterChips(field);
+        });
+        renderPoolFilterSummary();
+    }
+
+    function renderPoolFilterMenu(field) {
+        const key = field.dataset.field;
+        const st = poolFilterState[key];
+        const q = field.querySelector('.pf-search').value.trim().toLowerCase();
+        const matches = st.options.filter(o => o.toLowerCase().includes(q)).slice(0, 50);
+        const menu = field.querySelector('.pf-menu');
+        if (matches.length === 0) {
+            menu.innerHTML = '<div class="pf-opt empty">No matches</div>';
+            return;
+        }
+        menu.innerHTML = matches.map(o => {
+            const sel = st.selected.has(o) ? ' selected' : '';
+            return `<div class="pf-opt${sel}" data-value="${DrawWheel.escapeHtml(o)}">${st.selected.has(o) ? '☑' : '☐'} ${DrawWheel.escapeHtml(o)}</div>`;
+        }).join('');
+    }
+
+    function renderPoolFilterChips(field) {
+        const key = field.dataset.field;
+        const chips = field.querySelector('.pf-chips');
+        chips.innerHTML = [...poolFilterState[key].selected].map(v =>
+            `<span class="pf-chip">${DrawWheel.escapeHtml(v)}<button type="button" data-value="${DrawWheel.escapeHtml(v)}">×</button></span>`
+        ).join('');
+        chips.querySelectorAll('button').forEach(btn => {
+            btn.addEventListener('click', () => {
+                poolFilterState[key].selected.delete(btn.dataset.value);
+                renderPoolFilterChips(field);
+                renderPoolFilterMenu(field);
+                renderPoolFilterSummary();
+            });
+        });
+    }
+
+    function renderPoolFilterSummary() {
+        const el = document.getElementById('pf-summary');
+        if (!el) return;
+        const parts = [];
+        [['district', 'District'], ['city', 'City'], ['dealer', 'Dealer']].forEach(([key, label]) => {
+            const st = poolFilterState[key];
+            if (st.selected.size > 0) {
+                parts.push(`${st.mode === 'exclude' ? 'Exclude' : 'Only'} ${st.selected.size} ${label}${st.selected.size > 1 ? 's' : ''}`);
+            }
+        });
+        el.innerText = parts.length ? parts.join(' · ') : 'No filters applied — full eligible pool.';
+    }
+
+    function collectPoolFilters() {
+        const map = { district: 'districts', city: 'cities', dealer: 'dealers' };
+        const out = {};
+        Object.entries(map).forEach(([key, col]) => {
+            const st = poolFilterState[key];
+            const vals = [...st.selected];
+            out['include_' + col] = st.mode === 'include' ? vals : [];
+            out['exclude_' + col] = st.mode === 'exclude' ? vals : [];
+        });
+        return out;
+    }
+
+    function clearPoolFilters() {
+        Object.values(poolFilterState).forEach(st => { st.selected.clear(); st.mode = 'include'; });
+        document.querySelectorAll('#pool-filters .pf-field').forEach(field => {
+            field.querySelectorAll('.pf-mode button').forEach(b => b.classList.toggle('active', b.dataset.mode === 'include'));
+            field.querySelector('.pf-search').value = '';
+            renderPoolFilterChips(field);
+        });
+        renderPoolFilterSummary();
+    }
+
+    initPoolFilters();
 
     /* ---------- Wire up shared wheel engine hooks ---------- */
 

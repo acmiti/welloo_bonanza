@@ -28,6 +28,25 @@ if (empty($batchIds)) {
     exit;
 }
 
+// Accept SQL parameter arrays for the advanced pool filters. Each may arrive as a
+// real JSON array or as a comma-separated string (GET). Blank values are dropped.
+$bodyForFilters = isset($body) && is_array($body) ? $body : $_GET;
+$filterValues = static function ($raw): array {
+    if (!is_array($raw)) {
+        $raw = $raw === null || $raw === '' ? [] : explode(',', (string) $raw);
+    }
+    return array_values(array_unique(array_filter(array_map('trim', array_map('strval', $raw)), fn($s) => $s !== '')));
+};
+
+$filterDefs = [
+    ['include_districts', 'district', false],
+    ['exclude_districts', 'district', true],
+    ['include_cities',    'town',     false],
+    ['exclude_cities',    'town',     true],
+    ['include_dealers',   'dealer',   false],
+    ['exclude_dealers',   'dealer',   true],
+];
+
 $placeholders = [];
 $params = [];
 foreach ($batchIds as $i => $id) {
@@ -36,11 +55,27 @@ foreach ($batchIds as $i => $id) {
     $params[$key] = $id;
 }
 
+$filterSql = '';
+foreach ($filterDefs as [$field, $column, $isExclude]) {
+    $values = $filterValues($bodyForFilters[$field] ?? []);
+    if (empty($values)) {
+        continue;
+    }
+    $keys = [];
+    foreach ($values as $j => $val) {
+        $key = ":f_{$field}_{$j}";
+        $keys[] = $key;
+        $params[$key] = $val;
+    }
+    $filterSql .= " AND e.{$column} " . ($isExclude ? 'NOT IN' : 'IN') . " (" . implode(', ', $keys) . ")";
+}
+
 $sql = "SELECT e.id, e.name, e.phone, e.district, e.town, e.dealer, e.language, e.batch_id, e.multiplier, b.batch_name
         FROM bonanza_entries e
         JOIN draw_batches b ON b.id = e.batch_id
         WHERE e.batch_id IN (" . implode(', ', $placeholders) . ")
-          AND e.is_winner = 0
+          AND e.is_winner = 0"
+        . $filterSql . "
         ORDER BY e.id ASC";
 
 $stmt = $pdo->prepare($sql);
