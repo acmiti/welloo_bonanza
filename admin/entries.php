@@ -444,7 +444,7 @@ $rangeEnd = min($currentPage * $perPage, $totalEntriesCount);
     <?php endif; ?>
 </div>
 
-<?php if ($isAdmin && !$loadError): ?>
+<?php if (($isAdmin || $canBulkMultiplier) && !$loadError): ?>
 <div id="bulk-bar">
     <span id="bulk-count">0 items selected</span>
     <button class="btn btn-danger" onclick="openDeleteModal(getSelectedIds())">Delete Selected</button>
