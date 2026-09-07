@@ -17,7 +17,8 @@ $__admin_nav_items = [
         ['label' => 'All Entries',  'href' => '/admin/entries.php', 'match' => 'entries.php'],
     ],
     'data_entry' => [
-        ['label' => 'All Entries', 'href' => '/admin/entries.php', 'match' => 'entries.php'],
+        ['label' => 'All Entries',  'href' => '/admin/entries.php', 'match' => 'entries.php'],
+        ['label' => 'Winner Logs',  'href' => '/admin/winners.php', 'match' => 'winners.php'],
     ],
 ];
 

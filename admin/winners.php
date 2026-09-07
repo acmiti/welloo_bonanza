@@ -1,7 +1,10 @@
 <?php
 require_once __DIR__ . '/../includes/auth.php';
 
-check_access(['admin', 'draw_manager']);
+check_access(['admin', 'draw_manager', 'data_entry']);
+
+// data_entry gets a read-only view; admin and draw_manager may modify winners.
+$canModify = in_array($_SESSION['role'] ?? '', ['admin', 'draw_manager'], true);
 
 $loadError = null;
 $batches = [];
@@ -98,6 +101,7 @@ try {
         <div class="nav-links">
             <a class="btn" href="/api/export_winners.php">Export All to CSV</a>
         </div>
+        <?php if (!$canModify): ?><div class="meta" style="width:100%;color:#4DA6FF;font-size:12px;">Read-only view</div><?php endif; ?>
     </div>
 
     <?php if ($loadError): ?>
@@ -124,7 +128,7 @@ try {
                             <th>Dealer</th>
                             <th>Verification</th>
                             <th>Won At</th>
-                            <th>Actions</th>
+                            <?php if ($canModify): ?><th>Actions</th><?php endif; ?>
                         </tr>
                     </thead>
                     <tbody>
@@ -138,12 +142,14 @@ try {
                                     <span class="badge badge-<?= $w['verification_status'] ?>"><?= htmlspecialchars($w['verification_status']) ?></span>
                                 </td>
                                 <td><?= $w['won_at'] ? date('M d, Y H:i', strtotime($w['won_at'])) : '—' ?></td>
+                                <?php if ($canModify): ?>
                                 <td class="row-actions">
                                     <button onclick="toggleVerification(<?= (int) $w['id'] ?>)">
                                         <?= $w['verification_status'] === 'verified' ? 'Mark Pending' : 'Mark Verified' ?>
                                     </button>
                                     <button class="btn-disqualify" onclick="openDisqualifyModal(<?= (int) $w['id'] ?>, '<?= htmlspecialchars($w['name'], ENT_QUOTES) ?>')">Disqualify / Re-Spin</button>
                                 </td>
+                                <?php endif; ?>
                             </tr>
                         <?php endforeach; ?>
                     </tbody>
@@ -154,6 +160,7 @@ try {
     <?php endif; ?>
 </div>
 
+<?php if ($canModify): ?>
 <!-- Disqualify Modal -->
 <div class="modal-overlay" id="disqualifyModal">
     <div class="modal-box">
@@ -238,5 +245,6 @@ try {
         setTimeout(() => window.location.reload(), 500);
     }
 </script>
+<?php endif; ?>
 </body>
 </html>
