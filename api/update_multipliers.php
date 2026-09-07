@@ -1,12 +1,13 @@
 <?php
 // api/update_multipliers.php — bulk-set the winning-chance multiplier for entries
-// matched by phone number. Super admin (admin role) only.
+// matched by phone number. Available to admin and data_entry roles; every run is
+// written to the activity log with the acting user's id.
 header('Content-Type: application/json');
 
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/MetaCapi.php';
 
-check_access(['admin']);
+check_access(['admin', 'data_entry']);
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
@@ -53,6 +54,17 @@ $sql = "UPDATE bonanza_entries SET multiplier = :multiplier WHERE phone IN (" . 
 $stmt = $pdo->prepare($sql);
 $stmt->execute($params);
 $updated = $stmt->rowCount();
+
+// Audit: record who applied the multiplier change and to how many entries.
+error_log(sprintf(
+    '[bulk_multipliers] user_id=%s username=%s role=%s multiplier=%dx phones=%d updated=%d',
+    $_SESSION['user_id'] ?? 'unknown',
+    $_SESSION['username'] ?? 'unknown',
+    $_SESSION['role'] ?? 'unknown',
+    $multiplier,
+    count($phones),
+    $updated
+));
 
 if ($updated > 0) {
     foreach ($phones as $phone) {

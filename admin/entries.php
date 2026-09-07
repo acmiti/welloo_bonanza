@@ -5,6 +5,7 @@ check_access(['admin', 'draw_manager', 'data_entry']);
 
 $isAdmin = $_SESSION['role'] === 'admin';
 $canExport = in_array($_SESSION['role'], ['admin', 'data_entry'], true);
+$canBulkMultiplier = in_array($_SESSION['role'], ['admin', 'data_entry'], true);
 
 $batchFilter    = (int) ($_GET['batch_id'] ?? 0);
 $searchFilter   = trim($_GET['search'] ?? '');
@@ -249,6 +250,8 @@ $rangeEnd = min($currentPage * $perPage, $totalEntriesCount);
             <?php endif; ?>
             <?php if ($isAdmin): ?>
                 <a class="btn btn-secondary" id="export-all-btn" href="/api/export_entries.php">Export All Entries</a>
+            <?php endif; ?>
+            <?php if ($canBulkMultiplier): ?>
                 <button type="button" class="btn btn-secondary" id="open-multiplier-btn" onclick="openMultiplierModal()">🎯 Bulk Multipliers</button>
             <?php endif; ?>
         </div>
