@@ -1,10 +1,14 @@
 <?php
-// api/export_entries.php — CSV export of entries, respecting active filters.
+// api/export_entries.php — CSV export of entries, respecting active on-screen filters.
 // A request with no filter params (e.g. the "Export All Entries" action) exports
 // every row in bonanza_entries. Restricted strictly to the admin (super admin) role.
 require_once __DIR__ . '/../includes/auth.php';
 
 check_access(['admin']);
+
+// All timestamps in this app are stored in Sri Lanka Standard Time (Asia/Colombo,
+// UTC+5:30) — see config/db.php — so we only need to label them, not convert.
+$SLST_LABEL = 'SLST';
 
 $batchId  = (int) ($_GET['batch_id'] ?? 0);
 $search   = trim($_GET['search'] ?? '');
@@ -14,8 +18,26 @@ $dealer   = trim($_GET['dealer'] ?? '');
 $fromDate = trim($_GET['from_date'] ?? '');
 $toDate   = trim($_GET['to_date'] ?? '');
 
-$sql = "SELECT e.id, e.name, e.phone, e.district, e.town, e.dealer,
-               e.language, b.batch_name, e.is_winner, e.verification_status, e.created_at, e.multiplier
+// NIC/ID and Serial Number are not first-class columns on bonanza_entries. Pull
+// them opportunistically so the export keeps working whether or not the optional
+// migration that adds them has been run.
+$entryColumns = $pdo->query("SELECT column_name FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'bonanza_entries'")
+    ->fetchAll(PDO::FETCH_COLUMN);
+$nicColumn    = null;
+foreach (['nic', 'nic_number', 'national_id', 'id_number'] as $candidate) {
+    if (in_array($candidate, $entryColumns, true)) { $nicColumn = $candidate; break; }
+}
+$serialColumn = null;
+foreach (['serial_number', 'serial', 'invoice_number'] as $candidate) {
+    if (in_array($candidate, $entryColumns, true)) { $serialColumn = $candidate; break; }
+}
+
+$nicSelect    = $nicColumn    ? "e.`{$nicColumn}`"    : "NULL";
+$serialSelect = $serialColumn ? "e.`{$serialColumn}`" : "NULL";
+
+$sql = "SELECT e.id, e.name, e.phone, {$nicSelect} AS nic, e.district, e.town, e.dealer,
+               {$serialSelect} AS serial_number, e.created_at, e.is_winner, e.verification_status,
+               b.batch_name
         FROM bonanza_entries e
         LEFT JOIN draw_batches b ON b.id = e.batch_id";
 $where = [];
@@ -64,27 +86,45 @@ header('Content-Type: text/csv; charset=utf-8');
 header('Content-Disposition: attachment; filename=welloo_entries' . $filenameSuffix . '_' . date('Y-m-d') . '.csv');
 
 $output = fopen('php://output', 'w');
-fprintf($output, chr(0xEF) . chr(0xBB) . chr(0xBF)); // UTF-8 BOM for Excel support
+fprintf($output, chr(0xEF) . chr(0xBB) . chr(0xBF)); // UTF-8 BOM so Excel renders Sinhala/Tamil correctly
 
 fputcsv($output, [
-    'ID', 'Name', 'WhatsApp Number', 'District', 'City/Town', 'Hardware Store/Dealer',
-    'Language', 'Winner Status', 'Batch Name', 'Verification Status', 'Submission Date', 'Winning Chances (Multiplier)',
+    'Entry ID',
+    'Full Name',
+    'Phone Number',
+    'NIC/ID',
+    'District',
+    'City/Town',
+    'Dealer',
+    'Serial Number',
+    'Submission Date & Time (SLST)',
+    'Status',
 ]);
 
 foreach ($rows as $row) {
+    $submittedAt = $row['created_at']
+        ? date('Y-m-d H:i:s', strtotime($row['created_at'])) . ' ' . $SLST_LABEL
+        : '';
+
+    if ($row['is_winner']) {
+        $status = 'Winner';
+    } else {
+        $status = $row['verification_status'] !== null && $row['verification_status'] !== ''
+            ? ucfirst($row['verification_status'])
+            : '';
+    }
+
     fputcsv($output, [
         $row['id'],
         $row['name'],
         $row['phone'],
+        $row['nic'] ?? '',
         $row['district'],
         $row['town'],
         $row['dealer'],
-        $row['language'],
-        $row['is_winner'] ? 'Winner' : 'Not Winner',
-        $row['batch_name'] ?? '',
-        $row['verification_status'],
-        $row['created_at'],
-        $row['multiplier'] !== null && $row['multiplier'] !== '' ? $row['multiplier'] : 1,
+        $row['serial_number'] ?? '',
+        $submittedAt,
+        $status,
     ]);
 }
 

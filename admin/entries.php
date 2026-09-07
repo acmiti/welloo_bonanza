@@ -239,8 +239,8 @@ $rangeEnd = min($currentPage * $perPage, $totalEntriesCount);
     <div class="header">
         <h1>Entries</h1>
         <div class="nav-links">
-            <a class="btn" id="export-btn" href="<?= htmlspecialchars($exportUrl) ?>">Export Filtered</a>
             <?php if ($isAdmin): ?>
+                <a class="btn" id="export-btn" href="<?= htmlspecialchars($exportUrl) ?>" title="Download entries as a CSV file<?= $exportParams ? ' — current filters are applied' : '' ?>">📥 Export to CSV<?= $exportParams ? ' (Filtered)' : '' ?></a>
                 <a class="btn btn-secondary" id="export-all-btn" href="/api/export_entries.php">Export All Entries</a>
                 <button type="button" class="btn btn-secondary" id="open-multiplier-btn" onclick="openMultiplierModal()">🎯 Bulk Multipliers</button>
             <?php endif; ?>
