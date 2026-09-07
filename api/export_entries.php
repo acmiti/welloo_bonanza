@@ -1,10 +1,10 @@
 <?php
 // api/export_entries.php — CSV export of entries, respecting active on-screen filters.
 // A request with no filter params (e.g. the "Export All Entries" action) exports
-// every row in bonanza_entries. Restricted strictly to the admin (super admin) role.
+// every row in bonanza_entries. Restricted to admin and data_entry staff.
 require_once __DIR__ . '/../includes/auth.php';
 
-check_access(['admin']);
+check_access(['admin', 'data_entry']);
 
 // All timestamps in this app are stored in Sri Lanka Standard Time (Asia/Colombo,
 // UTC+5:30) — see config/db.php — so we only need to label them, not convert.

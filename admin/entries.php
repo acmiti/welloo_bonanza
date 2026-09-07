@@ -4,6 +4,7 @@ require_once __DIR__ . '/../includes/auth.php';
 check_access(['admin', 'draw_manager', 'data_entry']);
 
 $isAdmin = $_SESSION['role'] === 'admin';
+$canExport = in_array($_SESSION['role'], ['admin', 'data_entry'], true);
 
 $batchFilter    = (int) ($_GET['batch_id'] ?? 0);
 $searchFilter   = trim($_GET['search'] ?? '');
@@ -239,8 +240,10 @@ $rangeEnd = min($currentPage * $perPage, $totalEntriesCount);
     <div class="header">
         <h1>Entries</h1>
         <div class="nav-links">
-            <?php if ($isAdmin): ?>
+            <?php if ($canExport): ?>
                 <a class="btn" id="export-btn" href="<?= htmlspecialchars($exportUrl) ?>" title="Download entries as a CSV file<?= $exportParams ? ' — current filters are applied' : '' ?>">📥 Export to CSV<?= $exportParams ? ' (Filtered)' : '' ?></a>
+            <?php endif; ?>
+            <?php if ($isAdmin): ?>
                 <a class="btn btn-secondary" id="export-all-btn" href="/api/export_entries.php">Export All Entries</a>
                 <button type="button" class="btn btn-secondary" id="open-multiplier-btn" onclick="openMultiplierModal()">🎯 Bulk Multipliers</button>
             <?php endif; ?>
