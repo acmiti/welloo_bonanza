@@ -1,8 +1,8 @@
 // admin/assets/draw-countdown.js — self-rolling countdown widget driven by
-// api/get_active_draw.php. Polls the endpoint (which advances the schedule queue
-// server-side against Asia/Colombo time), shows the active draw's title + cut-off
-// countdown, and when the active draw expires it re-polls and seamlessly swaps to
-// the next scheduled draw with no page reload.
+// api/get_active_draw.php. Polls the endpoint (which advances the draw_batches
+// queue server-side against Asia/Colombo time), shows the active batch's name +
+// entry-deadline countdown, and when the active batch locks it re-polls and
+// seamlessly swaps to the next batch with no page reload.
 //
 // Usage:
 //   <div id="draw-countdown"
