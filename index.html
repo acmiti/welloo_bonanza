@@ -289,6 +289,8 @@
         setLang(currentLang, langBtn);
         fetchCurrentBatch();
         setInterval(fetchCurrentBatch, 60000);
+        fetchActiveDraw();
+        setInterval(fetchActiveDraw, 30000);
         fetchRecentEntries();
         startSocialProofLoop();
         trackPageView();
@@ -529,6 +531,10 @@
     }
 
     let currentBatch = null;
+    // Draw Scheduling & Auto-Rollover: when a scheduled draw is live, its cut-off
+    // drives the countdown instead of the batch deadline, and the clock re-points
+    // to the next draw automatically as rollovers happen server-side.
+    let activeDraw = null;
     let countdownIntervalId = null;
     let formLocked = false;
     let formSubmitted = false;
@@ -556,6 +562,35 @@
         applyBatchState();
     }
 
+    async function fetchActiveDraw() {
+        let previousId = activeDraw && activeDraw.id;
+        try {
+            const res = await fetch('api/get_active_draw.php', { headers: { 'Accept': 'application/json' }, cache: 'no-store' });
+            const data = await res.json();
+            activeDraw = (data.status === 'success') ? data.active_draw : null;
+        } catch (err) {
+            activeDraw = null;
+        }
+        // Re-point the countdown whenever the live draw changes (including a
+        // rollover to the next scheduled draw, or back to no active draw).
+        if ((activeDraw && activeDraw.id) !== previousId) {
+            applyBatchState();
+        }
+    }
+
+    // The countdown target: a live scheduled draw's cut-off wins; otherwise the
+    // current batch's entry deadline.
+    function resolveCountdownTarget() {
+        if (activeDraw && activeDraw.cutoff_time_iso) {
+            const d = parseServerDateTime(activeDraw.cutoff_time, activeDraw.cutoff_time_iso);
+            if (!isNaN(d.getTime())) return d;
+        }
+        if (currentBatch) {
+            return parseServerDateTime(currentBatch.entry_deadline, currentBatch.entry_deadline_iso);
+        }
+        return null;
+    }
+
     function applyBatchState() {
         if (countdownIntervalId) {
             clearInterval(countdownIntervalId);
@@ -564,20 +599,27 @@
 
         renderDeadlineSubtitle();
 
-        if (!currentBatch) {
+        const target = resolveCountdownTarget();
+
+        if (!target) {
             unlockEntryForm();
             return;
         }
 
-        const deadline = parseServerDateTime(currentBatch.entry_deadline, currentBatch.entry_deadline_iso);
-
-        if (Date.now() >= deadline.getTime()) {
+        if (Date.now() >= target.getTime()) {
+            // A live scheduled draw that just elapsed will be rolled over by the
+            // next poll — pull it now so the clock jumps to the next draw rather
+            // than sitting at zero.
+            if (activeDraw) {
+                fetchActiveDraw();
+                return;
+            }
             lockEntryForm();
             return;
         }
 
         unlockEntryForm();
-        startCountdown(deadline);
+        startCountdown(target);
     }
 
     function renderDeadlineSubtitle() {
@@ -605,7 +647,13 @@
                 document.getElementById('d-secs').innerText = '00';
                 lastCountdownParts = { d: '00', h: '00', m: '00', s: '00' };
                 updateExitTimerDisplay();
-                lockEntryForm();
+                // If a scheduled draw is driving the clock, roll over to the next
+                // one instead of locking the form on a batch deadline.
+                if (activeDraw) {
+                    fetchActiveDraw();
+                } else {
+                    lockEntryForm();
+                }
                 return;
             }
 

@@ -43,6 +43,11 @@ $subtitleText = $cutoffLabel !== ''
         .stage { width: 100%; max-width: 520px; text-align: center; }
         .stage-brand { color: #FF6600; font-weight: 900; font-size: 15px; letter-spacing: 0.4px; margin-bottom: 18px; text-transform: uppercase; }
 
+        .draw-countdown-bar { background: #141414; border: 1px solid #2A2A2A; border-radius: 12px; padding: 12px 16px; margin-bottom: 16px; display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; }
+        .draw-countdown-bar .dc-label { color: #888; font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px; }
+        .draw-countdown-bar .dc-title { color: #FF9900; font-weight: 800; font-size: 13px; }
+        .draw-countdown-bar .dc-clock { color: #25D366; font-weight: 900; font-size: 18px; font-variant-numeric: tabular-nums; }
+
         .pool-box { background: #1A1A1A; border: 1px solid #333; border-radius: 14px; padding: 28px; }
         #pool-count-label { color: #DDD; font-size: 13px; font-weight: 700; margin-bottom: 16px; }
 
@@ -92,6 +97,13 @@ $subtitleText = $cutoffLabel !== ''
     <button type="button" id="fullscreen-btn" onclick="toggleFullscreen()">⛶ Fullscreen</button>
     <div class="stage">
         <div class="stage-brand">Welloo Bonanza — Live Draw</div>
+        <div class="draw-countdown-bar">
+            <span class="dc-label">Active draw:</span>
+            <span class="dc-title" id="dc-title">—</span>
+            <span class="dc-clock" id="draw-countdown"
+                  data-title-el="#dc-title"
+                  data-empty-text="No scheduled draw active">—</span>
+        </div>
         <div class="pool-box">
             <div id="pool-count-label"><?= htmlspecialchars($subtitleText) ?></div>
             <div class="wheel-stage">
@@ -130,7 +142,11 @@ $subtitleText = $cutoffLabel !== ''
     <div id="toast"></div>
 
     <script src="/admin/assets/draw-wheel.js"></script>
+    <script src="/admin/assets/draw-countdown.js"></script>
     <script>
+        /* ---------- Auto-rolling active-draw countdown ---------- */
+        DrawCountdown.mount('#draw-countdown');
+
         /* ---------- Fullscreen presentation mode ---------- */
 
         function toggleFullscreen() {

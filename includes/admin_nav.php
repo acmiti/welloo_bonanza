@@ -6,6 +6,7 @@ $__admin_nav_items = [
     'admin' => [
         ['label' => 'Dashboard',       'href' => '/admin/dashboard.php', 'match' => 'dashboard.php'],
         ['label' => 'Draw Batches',    'href' => '/admin/batches.php',   'match' => 'batches.php'],
+        ['label' => 'Draw Schedule',   'href' => '/admin/draw_schedule.php', 'match' => 'draw_schedule.php'],
         ['label' => 'Draw Manager',    'href' => '/admin/draw.php',      'match' => 'draw.php'],
         ['label' => 'Winner Logs',     'href' => '/admin/winners.php',   'match' => 'winners.php'],
         ['label' => 'All Entries',     'href' => '/admin/entries.php',   'match' => 'entries.php'],
