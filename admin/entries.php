@@ -72,8 +72,11 @@ try {
         $params[':batch_id'] = $batchFilter;
     }
     if ($searchFilter !== '') {
-        $where[] = "(e.name LIKE :search OR e.phone LIKE :search)";
-        $params[':search'] = '%' . $searchFilter . '%';
+        // MySQL native prepares (PDO::ATTR_EMULATE_PREPARES => false) do not allow
+        // one named placeholder to appear twice, so bind a distinct name per column.
+        $where[] = "(e.name LIKE :search_name OR e.phone LIKE :search_phone)";
+        $params[':search_name'] = '%' . $searchFilter . '%';
+        $params[':search_phone'] = '%' . $searchFilter . '%';
     }
     if ($districtFilter !== '') {
         $where[] = "e.district = :district";

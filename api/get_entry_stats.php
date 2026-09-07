@@ -30,8 +30,10 @@ try {
         $params[':batch_id'] = $batchId;
     }
     if ($search !== '') {
-        $where[] = "(name LIKE :search OR phone LIKE :search)";
-        $params[':search'] = '%' . $search . '%';
+        // MySQL native prepares disallow reusing a named placeholder, so bind one per column.
+        $where[] = "(name LIKE :search_name OR phone LIKE :search_phone)";
+        $params[':search_name'] = '%' . $search . '%';
+        $params[':search_phone'] = '%' . $search . '%';
     }
     if ($district !== '') {
         $where[] = "district = :district";
