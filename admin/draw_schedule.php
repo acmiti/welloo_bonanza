@@ -6,17 +6,30 @@ require_once __DIR__ . '/../includes/draw_schedule.php';
 check_access(['admin']);
 
 // Bring the queue up to date with the current Asia/Colombo clock before rendering.
-draw_schedule_rollover($pdo);
+// Everything below degrades gracefully if database/06_create_draw_schedules.sql
+// has not been applied yet.
+$schedules   = ['scheduled' => [], 'active' => [], 'completed' => []];
+$tableExists = draw_schedules_table_exists($pdo);
 
-$rows = $pdo->query(
-    "SELECT id, title, status, start_time, cutoff_time, filter_rules, created_at
-       FROM draw_schedules
-      ORDER BY start_time ASC, id ASC"
-)->fetchAll();
+if ($tableExists) {
+    draw_schedule_rollover($pdo);
 
-$schedules = ['scheduled' => [], 'active' => [], 'completed' => []];
-foreach ($rows as $r) {
-    $schedules[$r['status']][] = draw_schedule_present($r);
+    try {
+        $rows = $pdo->query(
+            "SELECT id, title, status, start_time, cutoff_time, filter_rules, created_at
+               FROM draw_schedules
+              ORDER BY start_time ASC, id ASC"
+        )->fetchAll();
+
+        foreach ($rows as $r) {
+            if (isset($schedules[$r['status']])) {
+                $schedules[$r['status']][] = draw_schedule_present($r);
+            }
+        }
+    } catch (PDOException $e) {
+        error_log('admin/draw_schedule.php: ' . $e->getMessage());
+        $tableExists = false;
+    }
 }
 
 $FILTER_FIELDS = [
@@ -81,6 +94,9 @@ function fmt_dt(?string $iso): string
         .badge-active { background: rgba(37, 211, 102, 0.15); color: #25D366; }
         .badge-completed { background: rgba(170, 170, 170, 0.15); color: #AAA; }
 
+        .setup-warning { background: rgba(255, 153, 0, 0.1); border: 1px solid #FF9900; color: #FFC266; font-size: 13px; padding: 12px 16px; border-radius: 8px; margin-top: 14px; }
+        .setup-warning code { background: #222; color: #FF9900; padding: 1px 5px; border-radius: 4px; font-family: 'Consolas', monospace; }
+
         .placeholder { background: #151515; border: 1px dashed #333; border-radius: 8px; padding: 22px; text-align: center; color: #777; font-size: 13px; }
         .active-strip { background: linear-gradient(180deg, rgba(37,211,102,0.12), rgba(37,211,102,0.03)); border: 1px solid rgba(37,211,102,0.4); border-radius: 10px; padding: 16px 20px; margin-top: 14px; }
         .active-strip .live-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #25D366; margin-right: 8px; animation: pulse 1.4s infinite; }
@@ -100,6 +116,11 @@ function fmt_dt(?string $iso): string
     <div class="header">
         <h1>Draw Schedule</h1>
     </div>
+    <?php if (!$tableExists): ?>
+        <div class="setup-warning">
+            <strong>Database setup required:</strong> Please run <code>database/06_create_draw_schedules.sql</code> in phpMyAdmin to activate the Draw Schedule Queue.
+        </div>
+    <?php endif; ?>
     <p class="tz-note">All times are entered and shown in <strong>Sri Lanka Time (Asia/Colombo, UTC+5:30)</strong>. The active draw and rollover are evaluated against the server clock, which is pinned to this zone.</p>
 
     <!-- Active draw + live countdown -->
