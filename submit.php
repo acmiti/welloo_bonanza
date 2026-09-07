@@ -10,10 +10,16 @@ function render_page(string $title, string $bodyHtml, array $headTags = [], int 
 {
     http_response_code($httpCode);
     $head = implode("\n    ", $headTags);
+
+    ob_start();
+    require __DIR__ . '/includes/gtag.php';
+    $gtag = ob_get_clean();
+
     echo <<<HTML
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    {$gtag}
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{$title}</title>

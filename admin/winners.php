@@ -42,6 +42,7 @@ try {
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <?php require __DIR__ . '/../includes/gtag.php'; ?>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Winner Logs | Welloo Bonanza Admin</title>
